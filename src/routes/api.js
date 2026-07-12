@@ -41,6 +41,11 @@ router.post('/words', asyncHandler((req, res) => res.status(201).json(words.crea
 router.put('/words/:id', asyncHandler((req, res) => res.json(words.updateWord(db(req), idParam(req), req.body))));
 router.delete('/words/:id', asyncHandler((req, res) => { words.deleteWord(db(req), idParam(req)); res.status(204).end(); }));
 
+// Bulk word ops (CSV import / seeding, bulk delete)
+router.post('/sets/:id/words/bulk', asyncHandler((req, res) => res.status(201).json(words.bulkCreateWords(db(req), idParam(req), req.body.words ?? req.body))));
+router.delete('/sets/:id/words', asyncHandler((req, res) => res.json(words.deleteWordsInSet(db(req), idParam(req)))));
+router.delete('/languages/:id/words', asyncHandler((req, res) => res.json(words.deleteWordsForLanguage(db(req), idParam(req)))));
+
 // ---- Learning: review (new words) & practice (Leitner) ----
 router.get('/review/next', asyncHandler((req, res) => res.json(learning.reviewNext(db(req), { languageId: req.query.languageId, setId: req.query.setId, limit: req.query.limit }))));
 router.post('/review/:wordId/learned', asyncHandler((req, res) => res.json(learning.markLearned(db(req), idParam(req)))));

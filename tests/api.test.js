@@ -114,6 +114,46 @@ describe('learning flow (review -> practice)', () => {
   });
 });
 
+describe('bulk word ops', () => {
+  const { app } = makeApp();
+  const api = client(app);
+  let langId;
+  let setId;
+
+  beforeAll(async () => {
+    langId = (await api.post('/api/languages').send({ name: 'Spanish', code: 'es-ES' })).body.id;
+    setId = (await api.post('/api/sets').send({ name: 'Seed', languageId: langId })).body.id;
+  });
+
+  test('bulk import inserts words scoped to the set', async () => {
+    const res = await api.post(`/api/sets/${setId}/words/bulk`).send({
+      words: [
+        { word: 'hola', wordTranslated: 'hi', partOfSpeech: 'interj', definition: 'greeting' },
+        { word: 'casa', wordTranslated: 'house' },
+        { word: '' }, // skipped (no word)
+      ],
+    });
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({ inserted: 2 });
+    const list = await api.get(`/api/words?setId=${setId}`);
+    expect(list.body).toHaveLength(2);
+    expect(list.body[0].languageId).toBe(langId);
+  });
+
+  test('delete all words in a set', async () => {
+    const del = await api.del(`/api/sets/${setId}/words`);
+    expect(del.body.deleted).toBe(2);
+    expect((await api.get(`/api/words?setId=${setId}`)).body).toHaveLength(0);
+  });
+
+  test('delete all words for a language', async () => {
+    await api.post(`/api/sets/${setId}/words/bulk`).send({ words: [{ word: 'perro', wordTranslated: 'dog' }] });
+    const del = await api.del(`/api/languages/${langId}/words`);
+    expect(del.body.deleted).toBe(1);
+    expect((await api.get(`/api/words?languageId=${langId}`)).body).toHaveLength(0);
+  });
+});
+
 describe('sync', () => {
   const { app } = makeApp();
   const api = client(app);

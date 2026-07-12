@@ -86,4 +86,50 @@ function deleteWord(db, id) {
   db.prepare('UPDATE words SET deletedAt=@now, updatedAt=@now WHERE id=@id').run({ id, now: nowIso() });
 }
 
-module.exports = { WORD_FIELDS, serializeWord, getWord, getWordRow, listWords, createWord, updateWord, deleteWord };
+const NOT_NULL_TEXT = new Set(['word', 'wordTranslated', 'partOfSpeech', 'definition', 'definitionTranslated']);
+
+/** Bulk-insert words into a set (server assigns IDs). Used for CSV import / seeding. */
+function bulkCreateWords(db, setId, wordsInput = []) {
+  const set = db.prepare('SELECT id, languageId FROM word_sets WHERE id = ? AND deletedAt IS NULL').get(setId);
+  if (!set) throw badRequest('set not found');
+  const now = nowIso();
+  const npd = startOfDay(new Date());
+  const cols = ['languageId', 'wordSetId', ...WORD_FIELDS, 'leitnerBox', 'nextPracticeDate', 'isLearned', 'lastReviewedDate', 'createdAt', 'updatedAt'];
+  const stmt = db.prepare(`INSERT INTO words (${cols.join(',')}) VALUES (${cols.map((c) => '@' + c).join(',')})`);
+  const tx = db.transaction((items) => {
+    let count = 0;
+    for (const w of items) {
+      if (!w || !w.word) continue;
+      const rec = {
+        languageId: set.languageId, wordSetId: setId,
+        leitnerBox: 0, nextPracticeDate: npd, isLearned: 0, lastReviewedDate: null,
+        createdAt: now, updatedAt: now,
+      };
+      for (const f of WORD_FIELDS) rec[f] = w[f] ?? (NOT_NULL_TEXT.has(f) ? '' : null);
+      rec.word = w.word;
+      stmt.run(rec);
+      count += 1;
+    }
+    return count;
+  });
+  return { inserted: tx(wordsInput) };
+}
+
+/** Soft-delete every word in a set. */
+function deleteWordsInSet(db, setId) {
+  const now = nowIso();
+  const info = db.prepare('UPDATE words SET deletedAt=@now, updatedAt=@now WHERE wordSetId=@setId AND deletedAt IS NULL').run({ setId, now });
+  return { deleted: info.changes };
+}
+
+/** Soft-delete every word for a language. */
+function deleteWordsForLanguage(db, languageId) {
+  const now = nowIso();
+  const info = db.prepare('UPDATE words SET deletedAt=@now, updatedAt=@now WHERE languageId=@languageId AND deletedAt IS NULL').run({ languageId, now });
+  return { deleted: info.changes };
+}
+
+module.exports = {
+  WORD_FIELDS, serializeWord, getWord, getWordRow, listWords, createWord, updateWord, deleteWord,
+  bulkCreateWords, deleteWordsInSet, deleteWordsForLanguage,
+};
