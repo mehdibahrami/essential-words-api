@@ -1,0 +1,16 @@
+[Unit]
+Description=Essential Words API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=medhibahrami
+WorkingDirectory=/home/medhibahrami/essential-words-api
+ExecStart=/usr/local/bin/node server.js
+Restart=on-failure
+RestartSec=5
+EnvironmentFile=/home/medhibahrami/essential-words-api/.env
+
+[Install]
+WantedBy=multi-user.target

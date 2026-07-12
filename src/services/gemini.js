@@ -1,0 +1,67 @@
+const config = require('../config');
+const { HttpError } = require('../middleware/errorHandler');
+
+const BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+/**
+ * Call Gemini with `prompt` and decode the returned JSON array of quiz questions.
+ * Replicates GeminiAPIService.generateQuiz: responseMimeType=application/json,
+ * then slice the text from the first '[' to the last ']' before parsing.
+ */
+async function generateQuizFromPrompt(prompt, { apiKey = config.geminiApiKey, model = config.geminiModel, fetchImpl = fetch } = {}) {
+  if (!apiKey) throw new HttpError(500, 'GEMINI_NOT_CONFIGURED', 'GEMINI_API_KEY is not set');
+
+  const url = `${BASE}/${model}:generateContent?key=${apiKey}`;
+  const body = {
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: { responseMimeType: 'application/json' },
+  };
+
+  let res;
+  try {
+    res = await fetchImpl(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    throw new HttpError(502, 'GEMINI_REQUEST_FAILED', `Gemini request failed: ${err.message}`);
+  }
+
+  const raw = await res.text();
+  let payload;
+  try {
+    payload = JSON.parse(raw);
+  } catch {
+    throw new HttpError(502, 'GEMINI_BAD_RESPONSE', 'Gemini returned non-JSON response');
+  }
+
+  if (payload.error) {
+    throw new HttpError(502, 'GEMINI_API_ERROR', `Code ${payload.error.code}: ${payload.error.message}`);
+  }
+  const blockReason = payload.promptFeedback && payload.promptFeedback.blockReason;
+  if (blockReason) {
+    throw new HttpError(422, 'CONTENT_BLOCKED', `Prompt blocked: ${blockReason}`);
+  }
+
+  const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) {
+    throw new HttpError(502, 'GEMINI_EMPTY', 'Gemini response had no content');
+  }
+
+  const start = text.indexOf('[');
+  const end = text.lastIndexOf(']');
+  const jsonSlice = start !== -1 && end !== -1 ? text.slice(start, end + 1) : text;
+  let questions;
+  try {
+    questions = JSON.parse(jsonSlice);
+  } catch {
+    throw new HttpError(502, 'GEMINI_PARSE_FAILED', 'Could not parse quiz JSON from Gemini');
+  }
+  if (!Array.isArray(questions)) {
+    throw new HttpError(502, 'GEMINI_PARSE_FAILED', 'Gemini did not return a JSON array');
+  }
+  return questions;
+}
+
+module.exports = { generateQuizFromPrompt };
