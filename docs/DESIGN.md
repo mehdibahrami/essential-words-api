@@ -70,6 +70,8 @@ Data CRUD:
 - `GET/POST /languages`, `PUT/DELETE /languages/:id`
 - `GET /sets?languageId=`, `POST /sets`, `PUT/DELETE /sets/:id`
 - `GET /words?setId=&languageId=`, `GET /words/:id`, `POST /words`, `PUT/DELETE /words/:id`
+- `POST /sets/:id/words/bulk` — bulk-insert words (CSV import / language seeding)
+- `DELETE /sets/:id/words`, `DELETE /languages/:id/words` — bulk-delete words
 
 Learning actions:
 - `GET /review/next?languageId=&setId=&limit=` — new-word queue (box 0, due)

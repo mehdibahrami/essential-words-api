@@ -51,6 +51,10 @@ All under `/api`, all require `x-api-key`.
 `GET /sets?languageId=`, `POST /sets`, `PUT/DELETE /sets/:id`;
 `GET /words?setId=&languageId=`, `GET /words/:id`, `POST /words`, `PUT/DELETE /words/:id`.
 
+**Bulk words** — `POST /sets/:id/words/bulk` `{words: [...]}` (CSV import / language
+seeding), `DELETE /sets/:id/words` (empty a set), `DELETE /languages/:id/words`
+(empty a language).
+
 **Learning** — `GET /review/next?languageId=&setId=&limit=`, `POST /review/:wordId/learned`;
 `GET /practice/next?languageId=&setId=`, `POST /practice/:wordId/correct`,
 `POST /practice/:wordId/incorrect`; `GET /stats?languageId=&setId=`;
