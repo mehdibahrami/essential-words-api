@@ -50,6 +50,39 @@ describe('computeVerbPresent — irregular map', () => {
   });
 });
 
+describe('computeVerbPresent — separable verbs', () => {
+  test.each([
+    ['meenemen', 'neem mee', 'nemen mee'],
+    ['opstaan', 'sta op', 'staan op'],
+    ['aanbieden', 'bied aan', 'bieden aan'],
+    ['afrekenen', 'reken af', 'rekenen af'],   // schwa root
+    ['neerzetten', 'zet neer', 'zetten neer'], // stem ends in t
+    ['doorgeven', 'geef door', 'geven door'],
+  ])('%s -> ik %s / wij %s', (inf, ik, wij) => {
+    const r = g.computeVerbPresent(inf);
+    expect(r.separable).toBe(true);
+    expect(r.present.ik).toBe(ik);
+    expect(r.present.wij).toBe(wij);
+  });
+
+  test('trailing particle kept (omgaan met)', () => {
+    expect(g.computeVerbPresent('omgaan met').present.ik).toBe('ga om met');
+  });
+
+  test('buildVerbGrammar marks separable', () => {
+    expect(g.buildVerbGrammar('uitleggen')).toEqual({
+      kind: 'verb', irregular: false, separable: true,
+      present: { ik: 'leg uit', jij: 'legt uit', hij: 'legt uit', wij: 'leggen uit' },
+    });
+  });
+
+  test('lookalike non-separable verbs are not split', () => {
+    // openen/bijten start with a prefix but are not separable.
+    expect(g.computeVerbPresent('openen').present.ik).toBe('open');
+    expect(g.computeVerbPresent('bijten').present.ik).toBe('bijt');
+  });
+});
+
 describe('computeVerbPresent — guards', () => {
   test('non-infinitive returns null', () => {
     expect(g.computeVerbPresent('geef')).toBeNull();

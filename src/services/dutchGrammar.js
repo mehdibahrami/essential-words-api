@@ -58,6 +58,58 @@ const STEM_OVERRIDES = {
   antwoorden: 'antwoord', beloven: 'beloof',
 };
 
+/**
+ * Separable verbs: the prefix detaches and moves to the end of the clause in the present
+ * tense (meenemen -> "ik neem mee"). Separability is lexical (openen, bijten are NOT
+ * separable despite matching a prefix), so we gate on an explicit SEPARABLE_VERBS set and
+ * only then split by the longest matching prefix. Add new separable verbs here.
+ */
+const SEPARABLE_PREFIXES = [
+  'tegemoet', 'achterna', 'samen', 'binnen', 'terug', 'verder', 'tegen', 'langs', 'schoon',
+  'achter', 'tussen', 'boven', 'dicht', 'open', 'thuis', 'onder', 'klaar', 'vast',
+  'voor', 'over', 'door', 'neer', 'mee', 'weg', 'uit', 'toe', 'aan', 'los',
+  'op', 'af', 'in', 'om', 'na', 'bij', 'uiteen',
+].sort((a, b) => b.length - a.length);
+
+const SEPARABLE_VERBS = new Set([
+  'meenemen', 'samenwerken', 'weggaan', 'uitleggen', 'doorgaan', 'opstaan', 'terugkomen',
+  'ophalen', 'oplossen', 'binnenkomen', 'afspreken', 'aankomen', 'uitgaan', 'aanbieden',
+  'ingaan', 'opbellen', 'schoonmaken', 'dichtdoen', 'opendoen', 'samenwonen', 'inleveren',
+  'afwassen', 'weggooien', 'instappen', 'uitstappen', 'wegbrengen', 'oversteken', 'afgaan',
+  'tegenkomen', 'verdergaan', 'afrekenen', 'afmaken', 'afstuderen', 'doorgeven', 'langskomen',
+  'meebrengen', 'meedoen', 'meegeven', 'meekomen', 'meekijken', 'neerleggen', 'neerzetten',
+  'omgaan', 'opschrijven', 'meelopen', 'opbellen', 'uitzoeken', 'aanraden', 'meenemen',
+]);
+
+/**
+ * Conjugate a separable verb: split off the prefix, conjugate the root normally, then
+ * place the prefix at the end (and any trailing particle, e.g. "omgaan met").
+ * @returns {{present, irregular, separable:true} | null}
+ */
+function conjugateSeparable(infinitive) {
+  const [firstWord, ...rest] = infinitive.split(/\s+/);
+  const particle = rest.length ? ' ' + rest.join(' ') : '';
+  const prefix = SEPARABLE_PREFIXES.find(
+    (p) => firstWord.startsWith(p) && firstWord.length - p.length >= 3
+  );
+  if (!prefix) return null;
+  const root = firstWord.slice(prefix.length);
+  const rootForms = computeVerbPresent(root);
+  if (!rootForms) return null;
+  const tail = `${prefix}${particle}`;
+  const p = rootForms.present;
+  return {
+    present: {
+      ik: `${p.ik} ${tail}`,
+      jij: `${p.jij} ${tail}`,
+      hij: `${p.hij} ${tail}`,
+      wij: `${p.wij} ${tail}`,
+    },
+    irregular: rootForms.irregular,
+    separable: true,
+  };
+}
+
 function isConsonant(ch) {
   return /[a-z]/.test(ch) && !VOWELS.has(ch);
 }
@@ -114,6 +166,13 @@ function computeVerbPresent(infinitiveRaw) {
   const infinitive = infinitiveRaw.trim().toLowerCase();
   if (!infinitive) return null;
 
+  // Separable verbs first (gated on the explicit set to avoid false splits).
+  const firstWord = infinitive.split(/\s+/)[0];
+  if (SEPARABLE_VERBS.has(firstWord)) {
+    const sep = conjugateSeparable(infinitive);
+    if (sep) return sep;
+  }
+
   if (IRREGULAR_PRESENT[infinitive]) {
     return { present: { ...IRREGULAR_PRESENT[infinitive] }, irregular: true };
   }
@@ -135,7 +194,9 @@ function computeVerbPresent(infinitiveRaw) {
 function buildVerbGrammar(word) {
   const p = computeVerbPresent(word);
   if (!p) return null;
-  return { kind: 'verb', present: p.present, irregular: p.irregular };
+  const g = { kind: 'verb', present: p.present, irregular: p.irregular };
+  if (p.separable) g.separable = true;
+  return g;
 }
 
 /**

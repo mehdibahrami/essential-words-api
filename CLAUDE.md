@@ -19,6 +19,7 @@ Full design in [`docs/DESIGN.md`](docs/DESIGN.md).
 ## Grammar (Dutch verb conjugation + noun plurals)
 - Every word DTO carries a `grammar` object (or null), assembled in `words.serializeWord`. Shape is a discriminated union: `{kind:'verb', present:{ik,jij,hij,wij}, irregular}` or `{kind:'noun', article, plural, irregularPlural}`.
 - **Verbs are computed live** (`src/services/dutchGrammar.js`) from the infinitive — present tense is rule-derivable; only `zijn`/`hebben`/modals and a few schwa verbs (`luisteren`→`luister`) are pinned in `IRREGULAR_PRESENT`/`STEM_OVERRIDES`. Gated to `nl-NL` via a per-db language-code cache in `words.js`. New Dutch verbs conjugate automatically — no data entry.
+- **Separable verbs** (`meenemen` → "ik neem mee") carry `separable:true`. Separability is lexical, so it's gated on the explicit `SEPARABLE_VERBS` set; when a verb is in it, the longest matching `SEPARABLE_PREFIXES` is split off and the root is conjugated normally. Add new separable verbs to that set.
 - **Nouns are stored** in the nullable `words.grammar` TEXT column (gender/plural are lexical). Populated by `scripts/populate-dutch-nouns-db.js` from `scripts/data/dutch-nouns.json` (244 nouns, each plural verified against en.wiktionary; run direct-to-SQLite on the Pi — the HTTP path hits the rate limiter). `irregularPlural` is computed (not stored).
 - Column added by an idempotent migration in `src/db/index.js` (`ALTER TABLE words ADD COLUMN grammar`).
 
