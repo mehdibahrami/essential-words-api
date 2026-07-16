@@ -17,7 +17,7 @@ function snapshot(db, since) {
     serverTime,
     languages: q('languages'),
     sets: q('word_sets'),
-    words: q('words', serializeWord),
+    words: q('words', (r) => serializeWord(r, db)),
   };
 }
 
@@ -27,7 +27,7 @@ const WORD_COLS = [
   'id', 'languageId', 'wordSetId', 'word', 'wordTranslated', 'partOfSpeech',
   'definition', 'definitionTranslated', 'example1', 'example1Translated',
   'example2', 'example2Translated', 'example3', 'example3Translated',
-  'leitnerBox', 'nextPracticeDate', 'isLearned', 'lastReviewedDate',
+  'leitnerBox', 'nextPracticeDate', 'isLearned', 'lastReviewedDate', 'grammar',
   'createdAt', 'updatedAt', 'deletedAt',
 ];
 
@@ -37,6 +37,9 @@ function upsertRow(db, table, cols, row, now) {
   if (record.id == null) return; // import requires stable IDs
   if (record.isLearned !== undefined && typeof record.isLearned === 'boolean') {
     record.isLearned = record.isLearned ? 1 : 0;
+  }
+  if (record.grammar && typeof record.grammar === 'object') {
+    record.grammar = JSON.stringify(record.grammar);
   }
   record.createdAt = record.createdAt || now;
   record.updatedAt = record.updatedAt || now;

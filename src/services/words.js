@@ -1,5 +1,6 @@
 const { nowIso, startOfDay } = require('../utils/time');
 const { badRequest, notFound } = require('../middleware/errorHandler');
+const dutchGrammar = require('./dutchGrammar');
 
 const WORD_FIELDS = [
   'word', 'wordTranslated', 'partOfSpeech', 'definition', 'definitionTranslated',
@@ -7,10 +8,53 @@ const WORD_FIELDS = [
   'example3', 'example3Translated',
 ];
 
-/** Present isLearned as a boolean; leave the rest as stored. */
-function serializeWord(row) {
+// Cache of languageId -> code, per DB instance (a WeakMap so test DBs don't collide
+// and are GC'd). Language codes are stable, so no invalidation is needed.
+const langCodeByDb = new WeakMap();
+function languageCode(db, languageId) {
+  // Guard: serializeWord is sometimes reached via `.map(serializeWord)`, which would
+  // pass the array index here. Only a real db handle (object) is usable as a WeakMap key.
+  if (!db || typeof db !== 'object' || typeof db.prepare !== 'function') return null;
+  let byId = langCodeByDb.get(db);
+  if (!byId) { byId = new Map(); langCodeByDb.set(db, byId); }
+  if (byId.has(languageId)) return byId.get(languageId);
+  const row = db.prepare('SELECT code FROM languages WHERE id = ?').get(languageId);
+  const code = row ? row.code : null;
+  byId.set(languageId, code);
+  return code;
+}
+
+/**
+ * Build the grammar DTO for a word. Stored grammar (nouns; manual verb overrides)
+ * always wins; otherwise Dutch verbs are conjugated live from the infinitive.
+ */
+function buildGrammar(row, db) {
+  let stored = null;
+  if (row.grammar) { try { stored = JSON.parse(row.grammar); } catch (_) { stored = null; } }
+  const pos = (row.partOfSpeech || '').toLowerCase();
+  const isDutch = languageCode(db, row.languageId) === 'nl-NL';
+
+  if (stored) {
+    if (stored.kind === 'verb' && stored.present) return stored;
+    if (stored.article && stored.plural) return dutchGrammar.buildNounGrammar(row.word, stored);
+  }
+  if (isDutch && (pos === 'verb' || pos.startsWith('verb '))) {
+    return dutchGrammar.buildVerbGrammar(row.word);
+  }
+  return null;
+}
+
+/** Present isLearned as a boolean and attach the grammar DTO. */
+function serializeWord(row, db) {
   if (!row) return row;
-  return { ...row, isLearned: !!row.isLearned };
+  return { ...row, isLearned: !!row.isLearned, grammar: buildGrammar(row, db) };
+}
+
+/** Normalize an incoming grammar value (object or JSON string) to a stored TEXT column. */
+function serializeGrammarField(value) {
+  if (value == null) return null;
+  if (typeof value === 'string') return value; // assume already-serialized JSON
+  return JSON.stringify(value);
 }
 
 function getWordRow(db, id) {
@@ -18,7 +62,7 @@ function getWordRow(db, id) {
 }
 
 function getWord(db, id) {
-  return serializeWord(getWordRow(db, id));
+  return serializeWord(getWordRow(db, id), db);
 }
 
 function listWords(db, { setId, languageId, includeDeleted = false } = {}) {
@@ -28,7 +72,7 @@ function listWords(db, { setId, languageId, includeDeleted = false } = {}) {
   if (setId != null) { clauses.push('wordSetId = @setId'); params.setId = Number(setId); }
   if (languageId != null) { clauses.push('languageId = @languageId'); params.languageId = Number(languageId); }
   const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
-  return db.prepare(`SELECT * FROM words ${where} ORDER BY id ASC`).all(params).map(serializeWord);
+  return db.prepare(`SELECT * FROM words ${where} ORDER BY id ASC`).all(params).map((r) => serializeWord(r, db));
 }
 
 function createWord(db, body) {
@@ -53,8 +97,9 @@ function createWord(db, body) {
   };
   for (const f of WORD_FIELDS) record[f] = body[f] ?? (notNullText.has(f) ? '' : null);
   record.word = word; // required, keep verbatim
+  record.grammar = serializeGrammarField(body.grammar);
 
-  const cols = ['languageId', 'wordSetId', ...WORD_FIELDS, 'leitnerBox', 'nextPracticeDate', 'isLearned', 'lastReviewedDate', 'createdAt', 'updatedAt'];
+  const cols = ['languageId', 'wordSetId', ...WORD_FIELDS, 'grammar', 'leitnerBox', 'nextPracticeDate', 'isLearned', 'lastReviewedDate', 'createdAt', 'updatedAt'];
   const info = db
     .prepare(`INSERT INTO words (${cols.join(',')}) VALUES (${cols.map((c) => '@' + c).join(',')})`)
     .run(record);
@@ -72,9 +117,10 @@ function updateWord(db, id, fields) {
   if (fields.isLearned !== undefined) next.isLearned = fields.isLearned ? 1 : 0;
   if (fields.nextPracticeDate !== undefined) next.nextPracticeDate = fields.nextPracticeDate;
   if (fields.wordSetId !== undefined) next.wordSetId = Number(fields.wordSetId);
+  if (fields.grammar !== undefined) next.grammar = serializeGrammarField(fields.grammar);
   next.updatedAt = nowIso();
 
-  const assignable = [...WORD_FIELDS, 'leitnerBox', 'isLearned', 'nextPracticeDate', 'wordSetId', 'updatedAt'];
+  const assignable = [...WORD_FIELDS, 'grammar', 'leitnerBox', 'isLearned', 'nextPracticeDate', 'wordSetId', 'updatedAt'];
   db.prepare(`UPDATE words SET ${assignable.map((c) => `${c}=@${c}`).join(', ')} WHERE id=@id`)
     .run({ ...next, id });
   return getWord(db, id);
@@ -94,7 +140,7 @@ function bulkCreateWords(db, setId, wordsInput = []) {
   if (!set) throw badRequest('set not found');
   const now = nowIso();
   const npd = startOfDay(new Date());
-  const cols = ['languageId', 'wordSetId', ...WORD_FIELDS, 'leitnerBox', 'nextPracticeDate', 'isLearned', 'lastReviewedDate', 'createdAt', 'updatedAt'];
+  const cols = ['languageId', 'wordSetId', ...WORD_FIELDS, 'grammar', 'leitnerBox', 'nextPracticeDate', 'isLearned', 'lastReviewedDate', 'createdAt', 'updatedAt'];
   const stmt = db.prepare(`INSERT INTO words (${cols.join(',')}) VALUES (${cols.map((c) => '@' + c).join(',')})`);
   const tx = db.transaction((items) => {
     let count = 0;
@@ -107,6 +153,7 @@ function bulkCreateWords(db, setId, wordsInput = []) {
       };
       for (const f of WORD_FIELDS) rec[f] = w[f] ?? (NOT_NULL_TEXT.has(f) ? '' : null);
       rec.word = w.word;
+      rec.grammar = serializeGrammarField(w.grammar);
       stmt.run(rec);
       count += 1;
     }

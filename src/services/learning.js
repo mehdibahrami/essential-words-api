@@ -16,7 +16,7 @@ function reviewNext(db, { languageId, setId, limit = 20 } = {}) {
   return db
     .prepare(`SELECT * FROM words WHERE ${clauses.join(' AND ')} ORDER BY id ASC LIMIT @limit`)
     .all(params)
-    .map(serializeWord);
+    .map((r) => serializeWord(r, db));
 }
 
 /** Next due learned word. Mirrors fetchWordForPractice ordering. */
@@ -31,7 +31,7 @@ function practiceNext(db, { languageId, setId } = {}) {
        LIMIT 1`
     )
     .get(params);
-  return serializeWord(row);
+  return serializeWord(row, db);
 }
 
 function applyLeitner(db, wordId, changes) {
@@ -40,7 +40,7 @@ function applyLeitner(db, wordId, changes) {
   const patch = { ...changes, updatedAt: nowIso() };
   const assignments = Object.keys(patch).map((k) => `${k}=@${k}`).join(', ');
   db.prepare(`UPDATE words SET ${assignments} WHERE id=@id`).run({ ...patch, id: wordId });
-  return serializeWord(getWordRow(db, wordId));
+  return serializeWord(getWordRow(db, wordId), db);
 }
 
 const markLearned = (db, wordId, now = new Date()) => applyLeitner(db, wordId, leitner.markLearned(now));

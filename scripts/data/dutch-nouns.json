@@ -1,0 +1,1466 @@
+[
+ {
+  "id": 678,
+  "word": "de hand",
+  "article": "de",
+  "plural": "handen"
+ },
+ {
+  "id": 687,
+  "word": "de plaats",
+  "article": "de",
+  "plural": "plaatsen"
+ },
+ {
+  "id": 688,
+  "word": "het leven",
+  "article": "het",
+  "plural": "levens"
+ },
+ {
+  "id": 691,
+  "word": "de vader",
+  "article": "de",
+  "plural": "vaders"
+ },
+ {
+  "id": 697,
+  "word": "het feit",
+  "article": "het",
+  "plural": "feiten"
+ },
+ {
+  "id": 704,
+  "word": "de staat",
+  "article": "de",
+  "plural": "staten"
+ },
+ {
+  "id": 711,
+  "word": "het gevoel",
+  "article": "het",
+  "plural": "gevoelens"
+ },
+ {
+  "id": 712,
+  "word": "de tafel",
+  "article": "de",
+  "plural": "tafels"
+ },
+ {
+  "id": 713,
+  "word": "de school",
+  "article": "de",
+  "plural": "scholen"
+ },
+ {
+  "id": 715,
+  "word": "de dood",
+  "article": "de",
+  "plural": "doden"
+ },
+ {
+  "id": 718,
+  "word": "de jongeman",
+  "article": "de",
+  "plural": "jongemannen"
+ },
+ {
+  "id": 740,
+  "word": "de man",
+  "article": "de",
+  "plural": "mannen"
+ },
+ {
+  "id": 741,
+  "word": "het jaar",
+  "article": "het",
+  "plural": "jaren"
+ },
+ {
+  "id": 744,
+  "word": "de dag",
+  "article": "de",
+  "plural": "dagen"
+ },
+ {
+  "id": 747,
+  "word": "het huis",
+  "article": "het",
+  "plural": "huizen"
+ },
+ {
+  "id": 748,
+  "word": "de moeder",
+  "article": "de",
+  "plural": "moeders"
+ },
+ {
+  "id": 750,
+  "word": "het woord",
+  "article": "het",
+  "plural": "woorden"
+ },
+ {
+  "id": 752,
+  "word": "het werk",
+  "article": "het",
+  "plural": "werken"
+ },
+ {
+  "id": 756,
+  "word": "de wereld",
+  "article": "de",
+  "plural": "werelden"
+ },
+ {
+  "id": 757,
+  "word": "het uur",
+  "article": "het",
+  "plural": "uren"
+ },
+ {
+  "id": 758,
+  "word": "de naam",
+  "article": "de",
+  "plural": "namen"
+ },
+ {
+  "id": 759,
+  "word": "het soort",
+  "article": "het",
+  "plural": "soorten"
+ },
+ {
+  "id": 763,
+  "word": "het boek",
+  "article": "het",
+  "plural": "boeken"
+ },
+ {
+  "id": 764,
+  "word": "de deur",
+  "article": "de",
+  "plural": "deuren"
+ },
+ {
+  "id": 765,
+  "word": "het ding",
+  "article": "het",
+  "plural": "dingen"
+ },
+ {
+  "id": 767,
+  "word": "het water",
+  "article": "het",
+  "plural": "waters"
+ },
+ {
+  "id": 769,
+  "word": "het probleem",
+  "article": "het",
+  "plural": "problemen"
+ },
+ {
+  "id": 770,
+  "word": "de groep",
+  "article": "de",
+  "plural": "groepen"
+ },
+ {
+  "id": 772,
+  "word": "het bed",
+  "article": "het",
+  "plural": "bedden"
+ },
+ {
+  "id": 773,
+  "word": "het moment",
+  "article": "het",
+  "plural": "momenten"
+ },
+ {
+  "id": 774,
+  "word": "de vriend",
+  "article": "de",
+  "plural": "vrienden"
+ },
+ {
+  "id": 775,
+  "word": "de week",
+  "article": "de",
+  "plural": "weken"
+ },
+ {
+  "id": 777,
+  "word": "de nacht",
+  "article": "de",
+  "plural": "nachten"
+ },
+ {
+  "id": 780,
+  "word": "de wijn",
+  "article": "de",
+  "plural": "wijnen"
+ },
+ {
+  "id": 781,
+  "word": "de maand",
+  "article": "de",
+  "plural": "maanden"
+ },
+ {
+  "id": 782,
+  "word": "de mond",
+  "article": "de",
+  "plural": "monden"
+ },
+ {
+  "id": 783,
+  "word": "de reden",
+  "article": "de",
+  "plural": "redenen"
+ },
+ {
+  "id": 784,
+  "word": "de voet",
+  "article": "de",
+  "plural": "voeten"
+ },
+ {
+  "id": 785,
+  "word": "het idee",
+  "article": "het",
+  "plural": "ideeën"
+ },
+ {
+  "id": 786,
+  "word": "de rol",
+  "article": "de",
+  "plural": "rollen"
+ },
+ {
+  "id": 788,
+  "word": "het antwoord",
+  "article": "het",
+  "plural": "antwoorden"
+ },
+ {
+  "id": 790,
+  "word": "het plan",
+  "article": "het",
+  "plural": "plannen"
+ },
+ {
+  "id": 792,
+  "word": "de straat",
+  "article": "de",
+  "plural": "straten"
+ },
+ {
+  "id": 793,
+  "word": "de persoon",
+  "article": "de",
+  "plural": "personen"
+ },
+ {
+  "id": 794,
+  "word": "de schouder",
+  "article": "de",
+  "plural": "schouders"
+ },
+ {
+  "id": 796,
+  "word": "de invloed",
+  "article": "de",
+  "plural": "invloeden"
+ },
+ {
+  "id": 797,
+  "word": "het hart",
+  "article": "het",
+  "plural": "harten"
+ },
+ {
+  "id": 798,
+  "word": "de zoon",
+  "article": "de",
+  "plural": "zoons"
+ },
+ {
+  "id": 800,
+  "word": "de arm",
+  "article": "de",
+  "plural": "armen"
+ },
+ {
+  "id": 804,
+  "word": "de minuut",
+  "article": "de",
+  "plural": "minuten"
+ },
+ {
+  "id": 805,
+  "word": "de liefde",
+  "article": "de",
+  "plural": "liefdes"
+ },
+ {
+  "id": 808,
+  "word": "de relatie",
+  "article": "de",
+  "plural": "relaties"
+ },
+ {
+  "id": 809,
+  "word": "het systeem",
+  "article": "het",
+  "plural": "systemen"
+ },
+ {
+  "id": 810,
+  "word": "het proces",
+  "article": "het",
+  "plural": "processen"
+ },
+ {
+  "id": 814,
+  "word": "het contact",
+  "article": "het",
+  "plural": "contacten"
+ },
+ {
+  "id": 815,
+  "word": "de functie",
+  "article": "de",
+  "plural": "functies"
+ },
+ {
+  "id": 817,
+  "word": "de vinger",
+  "article": "de",
+  "plural": "vingers"
+ },
+ {
+  "id": 818,
+  "word": "de kleur",
+  "article": "de",
+  "plural": "kleuren"
+ },
+ {
+  "id": 819,
+  "word": "de pijn",
+  "article": "de",
+  "plural": "pijnen"
+ },
+ {
+  "id": 820,
+  "word": "het glas",
+  "article": "het",
+  "plural": "glazen"
+ },
+ {
+  "id": 821,
+  "word": "het artikel",
+  "article": "het",
+  "plural": "artikelen"
+ },
+ {
+  "id": 822,
+  "word": "het eind",
+  "article": "het",
+  "plural": "einden"
+ },
+ {
+  "id": 825,
+  "word": "de dokter",
+  "article": "de",
+  "plural": "dokters"
+ },
+ {
+  "id": 826,
+  "word": "de zee",
+  "article": "de",
+  "plural": "zeeën"
+ },
+ {
+  "id": 830,
+  "word": "de familie",
+  "article": "de",
+  "plural": "families"
+ },
+ {
+  "id": 831,
+  "word": "de periode",
+  "article": "de",
+  "plural": "periodes"
+ },
+ {
+  "id": 833,
+  "word": "het resultaat",
+  "article": "het",
+  "plural": "resultaten"
+ },
+ {
+  "id": 836,
+  "word": "de organisatie",
+  "article": "de",
+  "plural": "organisaties"
+ },
+ {
+  "id": 838,
+  "word": "de patiënt",
+  "article": "de",
+  "plural": "patiënten"
+ },
+ {
+  "id": 839,
+  "word": "de broer",
+  "article": "de",
+  "plural": "broers"
+ },
+ {
+  "id": 842,
+  "word": "het totaal",
+  "article": "het",
+  "plural": "totalen"
+ },
+ {
+  "id": 845,
+  "word": "de stap",
+  "article": "de",
+  "plural": "stappen"
+ },
+ {
+  "id": 846,
+  "word": "het karakter",
+  "article": "het",
+  "plural": "karakters"
+ },
+ {
+  "id": 847,
+  "word": "de theorie",
+  "article": "de",
+  "plural": "theorieën"
+ },
+ {
+  "id": 850,
+  "word": "de dochter",
+  "article": "de",
+  "plural": "dochters"
+ },
+ {
+  "id": 852,
+  "word": "de droom",
+  "article": "de",
+  "plural": "dromen"
+ },
+ {
+  "id": 853,
+  "word": "de meter",
+  "article": "de",
+  "plural": "meters"
+ },
+ {
+  "id": 854,
+  "word": "de steen",
+  "article": "de",
+  "plural": "stenen"
+ },
+ {
+  "id": 855,
+  "word": "de hulp",
+  "article": "de",
+  "plural": "hulpen"
+ },
+ {
+  "id": 856,
+  "word": "de rest",
+  "article": "de",
+  "plural": "resten"
+ },
+ {
+  "id": 858,
+  "word": "de maaltijd",
+  "article": "de",
+  "plural": "maaltijden"
+ },
+ {
+  "id": 860,
+  "word": "de bank",
+  "article": "de",
+  "plural": "banken"
+ },
+ {
+  "id": 861,
+  "word": "het papier",
+  "article": "het",
+  "plural": "papieren"
+ },
+ {
+  "id": 863,
+  "word": "de minister",
+  "article": "de",
+  "plural": "ministers"
+ },
+ {
+  "id": 864,
+  "word": "de wind",
+  "article": "de",
+  "plural": "winden"
+ },
+ {
+  "id": 865,
+  "word": "de koffie",
+  "article": "de",
+  "plural": "koffies"
+ },
+ {
+  "id": 867,
+  "word": "het oor",
+  "article": "het",
+  "plural": "oren"
+ },
+ {
+  "id": 868,
+  "word": "de informatie",
+  "article": "de",
+  "plural": "informaties"
+ },
+ {
+  "id": 869,
+  "word": "de methode",
+  "article": "de",
+  "plural": "methoden"
+ },
+ {
+  "id": 870,
+  "word": "de lip",
+  "article": "de",
+  "plural": "lippen"
+ },
+ {
+  "id": 871,
+  "word": "de positie",
+  "article": "de",
+  "plural": "posities"
+ },
+ {
+  "id": 874,
+  "word": "de foto",
+  "article": "de",
+  "plural": "foto's"
+ },
+ {
+  "id": 875,
+  "word": "de film",
+  "article": "de",
+  "plural": "films"
+ },
+ {
+  "id": 876,
+  "word": "de activiteit",
+  "article": "de",
+  "plural": "activiteiten"
+ },
+ {
+  "id": 878,
+  "word": "het geluk",
+  "article": "het",
+  "plural": "gelukken"
+ },
+ {
+  "id": 879,
+  "word": "de basis",
+  "article": "de",
+  "plural": "basissen"
+ },
+ {
+  "id": 880,
+  "word": "de zuster",
+  "article": "de",
+  "plural": "zusters"
+ },
+ {
+  "id": 882,
+  "word": "de tante",
+  "article": "de",
+  "plural": "tantes"
+ },
+ {
+  "id": 883,
+  "word": "het vuur",
+  "article": "het",
+  "plural": "vuren"
+ },
+ {
+  "id": 884,
+  "word": "de prijs",
+  "article": "de",
+  "plural": "prijzen"
+ },
+ {
+  "id": 885,
+  "word": "de reactie",
+  "article": "de",
+  "plural": "reacties"
+ },
+ {
+  "id": 886,
+  "word": "de praktijk",
+  "article": "de",
+  "plural": "praktijken"
+ },
+ {
+  "id": 887,
+  "word": "de neus",
+  "article": "de",
+  "plural": "neuzen"
+ },
+ {
+  "id": 888,
+  "word": "het terrein",
+  "article": "het",
+  "plural": "terreinen"
+ },
+ {
+  "id": 889,
+  "word": "de koning",
+  "article": "de",
+  "plural": "koningen"
+ },
+ {
+  "id": 892,
+  "word": "de cultuur",
+  "article": "de",
+  "plural": "culturen"
+ },
+ {
+  "id": 896,
+  "word": "de factor",
+  "article": "de",
+  "plural": "factoren"
+ },
+ {
+  "id": 898,
+  "word": "het succes",
+  "article": "het",
+  "plural": "successen"
+ },
+ {
+  "id": 900,
+  "word": "de natuur",
+  "article": "de",
+  "plural": "naturen"
+ },
+ {
+  "id": 901,
+  "word": "het hotel",
+  "article": "het",
+  "plural": "hotels"
+ },
+ {
+  "id": 902,
+  "word": "de studie",
+  "article": "de",
+  "plural": "studies"
+ },
+ {
+  "id": 904,
+  "word": "het aspect",
+  "article": "het",
+  "plural": "aspecten"
+ },
+ {
+  "id": 905,
+  "word": "de figuur",
+  "article": "de",
+  "plural": "figuren"
+ },
+ {
+  "id": 909,
+  "word": "de term",
+  "article": "de",
+  "plural": "termen"
+ },
+ {
+  "id": 913,
+  "word": "het effect",
+  "article": "het",
+  "plural": "effecten"
+ },
+ {
+  "id": 914,
+  "word": "de plant",
+  "article": "de",
+  "plural": "planten"
+ },
+ {
+  "id": 915,
+  "word": "het product",
+  "article": "het",
+  "plural": "producten"
+ },
+ {
+  "id": 917,
+  "word": "de tekst",
+  "article": "de",
+  "plural": "teksten"
+ },
+ {
+  "id": 918,
+  "word": "de knie",
+  "article": "de",
+  "plural": "knieën"
+ },
+ {
+  "id": 920,
+  "word": "de telefoon",
+  "article": "de",
+  "plural": "telefoons"
+ },
+ {
+  "id": 922,
+  "word": "de structuur",
+  "article": "de",
+  "plural": "structuren"
+ },
+ {
+  "id": 923,
+  "word": "de helft",
+  "article": "de",
+  "plural": "helften"
+ },
+ {
+  "id": 924,
+  "word": "de trein",
+  "article": "de",
+  "plural": "treinen"
+ },
+ {
+  "id": 926,
+  "word": "de zomer",
+  "article": "de",
+  "plural": "zomers"
+ },
+ {
+  "id": 928,
+  "word": "de conclusie",
+  "article": "de",
+  "plural": "conclusies"
+ },
+ {
+  "id": 929,
+  "word": "de baby",
+  "article": "de",
+  "plural": "baby's"
+ },
+ {
+  "id": 931,
+  "word": "het eiland",
+  "article": "het",
+  "plural": "eilanden"
+ },
+ {
+  "id": 932,
+  "word": "de meester",
+  "article": "de",
+  "plural": "meesters"
+ },
+ {
+  "id": 933,
+  "word": "de kwaliteit",
+  "article": "de",
+  "plural": "kwaliteiten"
+ },
+ {
+  "id": 935,
+  "word": "het individu",
+  "article": "het",
+  "plural": "individuen"
+ },
+ {
+  "id": 939,
+  "word": "de discussie",
+  "article": "de",
+  "plural": "discussies"
+ },
+ {
+  "id": 940,
+  "word": "de sigaret",
+  "article": "de",
+  "plural": "sigaretten"
+ },
+ {
+  "id": 941,
+  "word": "de vis",
+  "article": "de",
+  "plural": "vissen"
+ },
+ {
+  "id": 944,
+  "word": "het nummer",
+  "article": "het",
+  "plural": "nummers"
+ },
+ {
+  "id": 945,
+  "word": "de schaduw",
+  "article": "de",
+  "plural": "schaduwen"
+ },
+ {
+  "id": 946,
+  "word": "de leiding",
+  "article": "de",
+  "plural": "leidingen"
+ },
+ {
+  "id": 947,
+  "word": "de kat",
+  "article": "de",
+  "plural": "katten"
+ },
+ {
+  "id": 948,
+  "word": "de universiteit",
+  "article": "de",
+  "plural": "universiteiten"
+ },
+ {
+  "id": 950,
+  "word": "de fase",
+  "article": "de",
+  "plural": "fasen"
+ },
+ {
+  "id": 953,
+  "word": "het programma",
+  "article": "het",
+  "plural": "programma's"
+ },
+ {
+  "id": 954,
+  "word": "de leider",
+  "article": "de",
+  "plural": "leiders"
+ },
+ {
+  "id": 955,
+  "word": "het wapen",
+  "article": "het",
+  "plural": "wapens"
+ },
+ {
+  "id": 956,
+  "word": "de literatuur",
+  "article": "de",
+  "plural": "literaturen"
+ },
+ {
+  "id": 957,
+  "word": "het brood",
+  "article": "het",
+  "plural": "broden"
+ },
+ {
+  "id": 959,
+  "word": "de officier",
+  "article": "de",
+  "plural": "officieren"
+ },
+ {
+  "id": 960,
+  "word": "de rivier",
+  "article": "de",
+  "plural": "rivieren"
+ },
+ {
+  "id": 963,
+  "word": "de markt",
+  "article": "de",
+  "plural": "markten"
+ },
+ {
+  "id": 965,
+  "word": "de baas",
+  "article": "de",
+  "plural": "bazen"
+ },
+ {
+  "id": 966,
+  "word": "de schoen",
+  "article": "de",
+  "plural": "schoenen"
+ },
+ {
+  "id": 967,
+  "word": "de boot",
+  "article": "de",
+  "plural": "boten"
+ },
+ {
+  "id": 968,
+  "word": "de vloer",
+  "article": "de",
+  "plural": "vloeren"
+ },
+ {
+  "id": 970,
+  "word": "de winter",
+  "article": "de",
+  "plural": "winters"
+ },
+ {
+  "id": 971,
+  "word": "de maan",
+  "article": "de",
+  "plural": "manen"
+ },
+ {
+  "id": 972,
+  "word": "de kilometer",
+  "article": "de",
+  "plural": "kilometers"
+ },
+ {
+  "id": 973,
+  "word": "de wens",
+  "article": "de",
+  "plural": "wensen"
+ },
+ {
+  "id": 974,
+  "word": "het miljoen",
+  "article": "het",
+  "plural": "miljoenen"
+ },
+ {
+  "id": 975,
+  "word": "de seconde",
+  "article": "de",
+  "plural": "seconden"
+ },
+ {
+  "id": 977,
+  "word": "het bier",
+  "article": "het",
+  "plural": "bieren"
+ },
+ {
+  "id": 978,
+  "word": "de collega",
+  "article": "de",
+  "plural": "collega's"
+ },
+ {
+  "id": 979,
+  "word": "de actie",
+  "article": "de",
+  "plural": "acties"
+ },
+ {
+  "id": 981,
+  "word": "de psychologie",
+  "article": "de",
+  "plural": "psychologieën"
+ },
+ {
+  "id": 982,
+  "word": "de techniek",
+  "article": "de",
+  "plural": "technieken"
+ },
+ {
+  "id": 984,
+  "word": "het gras",
+  "article": "het",
+  "plural": "grassen"
+ },
+ {
+  "id": 985,
+  "word": "het pad",
+  "article": "het",
+  "plural": "paden"
+ },
+ {
+  "id": 989,
+  "word": "de ster",
+  "article": "de",
+  "plural": "sterren"
+ },
+ {
+  "id": 990,
+  "word": "de machine",
+  "article": "de",
+  "plural": "machines"
+ },
+ {
+  "id": 991,
+  "word": "de energie",
+  "article": "de",
+  "plural": "energieën"
+ },
+ {
+  "id": 993,
+  "word": "de nek",
+  "article": "de",
+  "plural": "nekken"
+ },
+ {
+  "id": 995,
+  "word": "de auteur",
+  "article": "de",
+  "plural": "auteurs"
+ },
+ {
+  "id": 996,
+  "word": "het procent",
+  "article": "het",
+  "plural": "procenten"
+ },
+ {
+  "id": 997,
+  "word": "het museum",
+  "article": "het",
+  "plural": "musea"
+ },
+ {
+  "id": 1000,
+  "word": "de bus",
+  "article": "de",
+  "plural": "bussen"
+ },
+ {
+  "id": 1001,
+  "word": "de directeur",
+  "article": "de",
+  "plural": "directeurs"
+ },
+ {
+  "id": 1002,
+  "word": "het materiaal",
+  "article": "het",
+  "plural": "materialen"
+ },
+ {
+  "id": 1004,
+  "word": "het veld",
+  "article": "het",
+  "plural": "velden"
+ },
+ {
+  "id": 1005,
+  "word": "de gast",
+  "article": "de",
+  "plural": "gasten"
+ },
+ {
+  "id": 1008,
+  "word": "het centrum",
+  "article": "het",
+  "plural": "centra"
+ },
+ {
+  "id": 1009,
+  "word": "de productie",
+  "article": "de",
+  "plural": "producties"
+ },
+ {
+  "id": 1014,
+  "word": "de klant",
+  "article": "de",
+  "plural": "klanten"
+ },
+ {
+  "id": 1015,
+  "word": "de tong",
+  "article": "de",
+  "plural": "tongen"
+ },
+ {
+  "id": 1016,
+  "word": "het argument",
+  "article": "het",
+  "plural": "argumenten"
+ },
+ {
+  "id": 1018,
+  "word": "de kaas",
+  "article": "de",
+  "plural": "kazen"
+ },
+ {
+  "id": 1019,
+  "word": "de titel",
+  "article": "de",
+  "plural": "titels"
+ },
+ {
+  "id": 1020,
+  "word": "de visie",
+  "article": "de",
+  "plural": "visies"
+ },
+ {
+  "id": 1021,
+  "word": "de persoonlijkheid",
+  "article": "de",
+  "plural": "persoonlijkheden"
+ },
+ {
+  "id": 1022,
+  "word": "de kust",
+  "article": "de",
+  "plural": "kusten"
+ },
+ {
+  "id": 1024,
+  "word": "de radio",
+  "article": "de",
+  "plural": "radio's"
+ },
+ {
+  "id": 1028,
+  "word": "de olie",
+  "article": "de",
+  "plural": "oliën"
+ },
+ {
+  "id": 1029,
+  "word": "de thee",
+  "article": "de",
+  "plural": "theeën"
+ },
+ {
+  "id": 1030,
+  "word": "het risico",
+  "article": "het",
+  "plural": "risico's"
+ },
+ {
+  "id": 1031,
+  "word": "de president",
+  "article": "de",
+  "plural": "presidenten"
+ },
+ {
+  "id": 1035,
+  "word": "het adres",
+  "article": "het",
+  "plural": "adressen"
+ },
+ {
+  "id": 1036,
+  "word": "het experiment",
+  "article": "het",
+  "plural": "experimenten"
+ },
+ {
+  "id": 1038,
+  "word": "het advies",
+  "article": "het",
+  "plural": "adviezen"
+ },
+ {
+  "id": 1041,
+  "word": "de stijl",
+  "article": "de",
+  "plural": "stijlen"
+ },
+ {
+  "id": 1042,
+  "word": "de top",
+  "article": "de",
+  "plural": "toppen"
+ },
+ {
+  "id": 1043,
+  "word": "de traditie",
+  "article": "de",
+  "plural": "tradities"
+ },
+ {
+  "id": 1046,
+  "word": "de computer",
+  "article": "de",
+  "plural": "computers"
+ },
+ {
+  "id": 1047,
+  "word": "de generatie",
+  "article": "de",
+  "plural": "generaties"
+ },
+ {
+  "id": 1048,
+  "word": "de bodem",
+  "article": "de",
+  "plural": "bodems"
+ },
+ {
+  "id": 1049,
+  "word": "de student",
+  "article": "de",
+  "plural": "studenten"
+ },
+ {
+  "id": 1051,
+  "word": "de categorie",
+  "article": "de",
+  "plural": "categorieën"
+ },
+ {
+  "id": 1056,
+  "word": "het instrument",
+  "article": "het",
+  "plural": "instrumenten"
+ },
+ {
+  "id": 1057,
+  "word": "de klas",
+  "article": "de",
+  "plural": "klassen"
+ },
+ {
+  "id": 1058,
+  "word": "de combinatie",
+  "article": "de",
+  "plural": "combinaties"
+ },
+ {
+  "id": 1060,
+  "word": "het landschap",
+  "article": "het",
+  "plural": "landschappen"
+ },
+ {
+  "id": 1061,
+  "word": "de warmte",
+  "article": "de",
+  "plural": "warmtes"
+ },
+ {
+  "id": 1062,
+  "word": "de televisie",
+  "article": "de",
+  "plural": "televisies"
+ },
+ {
+  "id": 1064,
+  "word": "het patroon",
+  "article": "het",
+  "plural": "patroons"
+ },
+ {
+  "id": 1065,
+  "word": "de agent",
+  "article": "de",
+  "plural": "agenten"
+ },
+ {
+  "id": 1066,
+  "word": "de emotie",
+  "article": "de",
+  "plural": "emoties"
+ },
+ {
+  "id": 1067,
+  "word": "het orgaan",
+  "article": "het",
+  "plural": "organen"
+ },
+ {
+  "id": 1068,
+  "word": "de provincie",
+  "article": "de",
+  "plural": "provinciën"
+ },
+ {
+  "id": 1069,
+  "word": "het detail",
+  "article": "het",
+  "plural": "details"
+ },
+ {
+  "id": 1070,
+  "word": "het restaurant",
+  "article": "het",
+  "plural": "restaurants"
+ },
+ {
+  "id": 1073,
+  "word": "het station",
+  "article": "het",
+  "plural": "stations"
+ },
+ {
+  "id": 1075,
+  "word": "de sector",
+  "article": "de",
+  "plural": "sectoren"
+ },
+ {
+  "id": 1079,
+  "word": "het symbool",
+  "article": "het",
+  "plural": "symbolen"
+ },
+ {
+  "id": 1080,
+  "word": "de luitenant",
+  "article": "de",
+  "plural": "luitenanten"
+ },
+ {
+  "id": 1082,
+  "word": "het motief",
+  "article": "het",
+  "plural": "motieven"
+ },
+ {
+  "id": 1083,
+  "word": "de fabriek",
+  "article": "de",
+  "plural": "fabrieken"
+ },
+ {
+  "id": 1084,
+  "word": "de lijst",
+  "article": "de",
+  "plural": "lijsten"
+ },
+ {
+  "id": 1087,
+  "word": "de mama",
+  "article": "de",
+  "plural": "mama's"
+ },
+ {
+  "id": 1091,
+  "word": "de vorming",
+  "article": "de",
+  "plural": "vormingen"
+ },
+ {
+  "id": 1092,
+  "word": "het café",
+  "article": "het",
+  "plural": "cafés"
+ },
+ {
+  "id": 1093,
+  "word": "het object",
+  "article": "het",
+  "plural": "objecten"
+ },
+ {
+  "id": 1095,
+  "word": "het kamp",
+  "article": "het",
+  "plural": "kampen"
+ },
+ {
+  "id": 1100,
+  "word": "het initiatief",
+  "article": "het",
+  "plural": "initiatieven"
+ },
+ {
+  "id": 1104,
+  "word": "de consequentie",
+  "article": "de",
+  "plural": "consequenties"
+ },
+ {
+  "id": 1107,
+  "word": "de hoed",
+  "article": "de",
+  "plural": "hoeden"
+ },
+ {
+  "id": 1111,
+  "word": "de psycholoog",
+  "article": "de",
+  "plural": "psychologen"
+ },
+ {
+  "id": 1112,
+  "word": "de pers",
+  "article": "de",
+  "plural": "persen"
+ },
+ {
+  "id": 1113,
+  "word": "het terras",
+  "article": "het",
+  "plural": "terrassen"
+ },
+ {
+  "id": 1115,
+  "word": "de crisis",
+  "article": "de",
+  "plural": "crises"
+ },
+ {
+  "id": 1116,
+  "word": "de pot",
+  "article": "de",
+  "plural": "potten"
+ },
+ {
+  "id": 1117,
+  "word": "de operatie",
+  "article": "de",
+  "plural": "operaties"
+ },
+ {
+  "id": 1118,
+  "word": "de partner",
+  "article": "de",
+  "plural": "partners"
+ },
+ {
+  "id": 1119,
+  "word": "de suiker",
+  "article": "de",
+  "plural": "suikers"
+ },
+ {
+  "id": 1121,
+  "word": "de plaat",
+  "article": "de",
+  "plural": "platen"
+ },
+ {
+  "id": 1123,
+  "word": "de economie",
+  "article": "de",
+  "plural": "economieën"
+ },
+ {
+  "id": 1126,
+  "word": "het kruis",
+  "article": "het",
+  "plural": "kruizen"
+ },
+ {
+  "id": 1128,
+  "word": "het project",
+  "article": "het",
+  "plural": "projecten"
+ },
+ {
+  "id": 1129,
+  "word": "de hut",
+  "article": "de",
+  "plural": "hutten"
+ },
+ {
+  "id": 1131,
+  "word": "de communicatie",
+  "article": "de",
+  "plural": "communicaties"
+ }
+]

@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS words (
   nextPracticeDate TEXT,
   isLearned INTEGER NOT NULL DEFAULT 0,
   lastReviewedDate TEXT,
+  grammar TEXT,
   createdAt TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   updatedAt TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   deletedAt TEXT
@@ -62,7 +63,16 @@ function openDatabase(dbPath = config.dbPath) {
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   db.exec(SCHEMA);
+  migrate(db);
   return db;
+}
+
+/** Idempotent, additive migrations for databases created before a column existed. */
+function migrate(db) {
+  const wordCols = db.prepare('PRAGMA table_info(words)').all().map((c) => c.name);
+  if (!wordCols.includes('grammar')) {
+    db.exec('ALTER TABLE words ADD COLUMN grammar TEXT');
+  }
 }
 
 // Shared singleton for the running server. Tests open their own in-memory DBs.

@@ -67,6 +67,83 @@ describe('CRUD: languages, sets, words', () => {
   });
 });
 
+describe('grammar DTO', () => {
+  const { app } = makeApp();
+  const api = client(app);
+  let langId; let setId;
+
+  beforeAll(async () => {
+    langId = (await api.post('/api/languages').send({ name: 'Dutch', code: 'nl-NL' })).body.id;
+    setId = (await api.post('/api/sets').send({ name: 'Grammar', languageId: langId })).body.id;
+  });
+
+  test('Dutch verb gets computed present tense', async () => {
+    const res = await api.post('/api/words').send({
+      word: 'maken', wordTranslated: 'to make', partOfSpeech: 'verb', languageId: langId, wordSetId: setId,
+    });
+    expect(res.body.grammar).toEqual({
+      kind: 'verb', irregular: false,
+      present: { ik: 'maak', jij: 'maakt', hij: 'maakt', wij: 'maken' },
+    });
+  });
+
+  test('irregular Dutch verb flagged', async () => {
+    const res = await api.post('/api/words').send({
+      word: 'zijn', wordTranslated: 'to be', partOfSpeech: 'verb', languageId: langId, wordSetId: setId,
+    });
+    expect(res.body.grammar.irregular).toBe(true);
+    expect(res.body.grammar.present.hij).toBe('is');
+  });
+
+  test('noun grammar round-trips from stored data', async () => {
+    const created = await api.post('/api/words').send({
+      word: 'kind', wordTranslated: 'child', partOfSpeech: 'noun', languageId: langId, wordSetId: setId,
+      grammar: { kind: 'noun', article: 'het', plural: 'kinderen' },
+    });
+    expect(created.body.grammar).toEqual({
+      kind: 'noun', article: 'het', plural: 'kinderen', irregularPlural: true,
+    });
+    // survives a re-read
+    const got = await api.get(`/api/words/${created.body.id}`);
+    expect(got.body.grammar.article).toBe('het');
+  });
+
+  test('non-verb/non-noun Dutch word has null grammar', async () => {
+    const res = await api.post('/api/words').send({
+      word: 'snel', wordTranslated: 'fast', partOfSpeech: 'adjective', languageId: langId, wordSetId: setId,
+    });
+    expect(res.body.grammar).toBeNull();
+  });
+
+  test('non-Dutch verb is not conjugated', async () => {
+    const enId = (await api.post('/api/languages').send({ name: 'English', code: 'en-US' })).body.id;
+    const enSet = (await api.post('/api/sets').send({ name: 'EN', languageId: enId })).body.id;
+    const res = await api.post('/api/words').send({
+      word: 'make', partOfSpeech: 'Verb', languageId: enId, wordSetId: enSet,
+    });
+    expect(res.body.grammar).toBeNull();
+  });
+});
+
+describe('review queue serialization (regression)', () => {
+  const { app } = makeApp();
+  const api = client(app);
+
+  test('multiple queued words serialize without error and carry grammar', async () => {
+    // serializeWord is reached via `.map(serializeWord)`; the 2nd+ item passed an array
+    // index as the db arg and used to crash the language-code cache (500).
+    const langId = (await api.post('/api/languages').send({ name: 'Dutch', code: 'nl-NL' })).body.id;
+    const setId = (await api.post('/api/sets').send({ name: 'Q', languageId: langId })).body.id;
+    for (const word of ['maken', 'werken', 'lopen']) {
+      await api.post('/api/words').send({ word, partOfSpeech: 'verb', languageId: langId, wordSetId: setId });
+    }
+    const res = await api.get(`/api/review/next?setId=${setId}`);
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBe(3);
+    res.body.forEach((w) => expect(w.grammar).toMatchObject({ kind: 'verb' }));
+  });
+});
+
 describe('learning flow (review -> practice)', () => {
   const { app } = makeApp();
   const api = client(app);
