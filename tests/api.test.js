@@ -84,6 +84,7 @@ describe('grammar DTO', () => {
     expect(res.body.grammar).toEqual({
       kind: 'verb', irregular: false,
       present: { ik: 'maak', jij: 'maakt', hij: 'maakt', wij: 'maken' },
+      past: { singular: 'maakte', plural: 'maakten' }, pastParticiple: 'gemaakt',
     });
   });
 

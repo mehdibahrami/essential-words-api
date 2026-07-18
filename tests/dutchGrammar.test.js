@@ -73,6 +73,7 @@ describe('computeVerbPresent — separable verbs', () => {
     expect(g.buildVerbGrammar('uitleggen')).toEqual({
       kind: 'verb', irregular: false, separable: true,
       present: { ik: 'leg uit', jij: 'legt uit', hij: 'legt uit', wij: 'leggen uit' },
+      past: { singular: 'legde uit', plural: 'legden uit' }, pastParticiple: 'uitgelegd',
     });
   });
 
