@@ -431,6 +431,21 @@ describe('trouble word drills', () => {
     expect(byId[ids.tafel].cloze).toBeNull();
   });
 
+  test('falls back to the word own example when AI returns a non-array', async () => {
+    const { db, languageId, ids } = seed();
+    for (const generate of [async () => null, async () => ({})]) {
+      const out = await troubleDrills.generateDrills(db, { languageId, wordIds: [ids.liggen, ids.tafel] }, { generate });
+      const byId = Object.fromEntries(out.map((d) => [d.wordId, d]));
+      expect(byId[ids.liggen].cloze.sentence).toContain('____');
+      expect(byId[ids.liggen].cloze.sentence).not.toMatch(/ligt/i);
+      expect(byId[ids.liggen].cloze.distractors.length).toBeGreaterThanOrEqual(2);
+      expect(byId[ids.liggen].hook).toBeNull();
+      // No example sentence and no AI -> no cloze at all; the client skips rung 2.
+      expect(byId[ids.tafel].cloze).toBeNull();
+      expect(byId[ids.tafel].hook).toBeNull();
+    }
+  });
+
   test('rejects a malformed AI cloze and falls back', async () => {
     const { db, languageId, ids } = seed();
     // No blank marker, and the answer is visible in the sentence.
@@ -448,8 +463,21 @@ describe('trouble word drills', () => {
     const { db, languageId, ids } = seed();
     await expect(troubleDrills.generateDrills(db, { languageId, wordIds: [] }, { generate: async () => [] }))
       .rejects.toThrow(/wordIds/);
-    const many = Array.from({ length: 20 }, () => ids.liggen);
-    const out = await troubleDrills.generateDrills(db, { languageId, wordIds: many }, { generate: async () => [] });
-    expect(out.length).toBeLessThanOrEqual(8);
+
+    // 9 DISTINCT word ids so the MAX_DRILL_WORDS slice actually has something to cut —
+    // 20 copies of the SAME id would collapse to length 1 via the dedupe Set before the
+    // cap logic ever runs, and the assertion below would pass trivially.
+    const setRow = db.prepare('SELECT wordSetId FROM words WHERE id = ?').get(ids.liggen);
+    const insert = db.prepare(`INSERT INTO words (languageId, wordSetId, word, wordTranslated, definition, example1)
+                               VALUES (?,?,?,?,?,?)`);
+    const distinctIds = [ids.liggen, ids.tafel];
+    for (let i = 0; i < 7; i++) {
+      const r = insert.run(languageId, setRow.wordSetId, `extra${i}`, `extra${i}`, `extra${i}`, null);
+      distinctIds.push(r.lastInsertRowid);
+    }
+    expect(new Set(distinctIds).size).toBe(9);
+
+    const out = await troubleDrills.generateDrills(db, { languageId, wordIds: distinctIds }, { generate: async () => [] });
+    expect(out.length).toBe(8);
   });
 });
