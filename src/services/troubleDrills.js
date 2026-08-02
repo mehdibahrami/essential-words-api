@@ -68,15 +68,38 @@ function pickDistractors(pool, answer, headword, count = 3) {
 }
 
 /**
+ * The distractors the client can actually show: trimmed, distinct from each other and
+ * from the answer, both compared case- and trim-insensitively.
+ *
+ * The client renders the options as `distractors + [answer]` and grades by string
+ * equality, so a distractor repeating the answer would make two options correct at
+ * once — and duplicate strings collide as identities in its `ForEach(id: \.self)`.
+ * The model is asked for distinct wrong forms but nothing enforces it, so normalise
+ * here: a malformed cloze reaching the client is worse than no cloze.
+ */
+function usableDistractors(distractors, answer) {
+  const seen = new Set([String(answer || '').trim().toLowerCase()]);
+  const out = [];
+  for (const candidate of Array.isArray(distractors) ? distractors : []) {
+    if (typeof candidate !== 'string') continue;
+    const trimmed = candidate.trim();
+    const key = trimmed.toLowerCase();
+    if (!trimmed || seen.has(key)) continue;
+    seen.add(key);
+    out.push(trimmed);
+  }
+  return out;
+}
+
+/**
  * A cloze is usable only if it has a blank, a non-empty answer, at least two
- * distractors, and does not leak the answer outside the blank.
+ * distinct distractors, and does not leak the answer outside the blank.
  */
 function validCloze(cloze) {
   if (!cloze || typeof cloze.sentence !== 'string' || typeof cloze.answer !== 'string') return false;
   if (!cloze.sentence.includes(BLANK)) return false;
   if (!cloze.answer.trim()) return false;
-  const distractors = Array.isArray(cloze.distractors) ? cloze.distractors.filter((d) => typeof d === 'string' && d.trim()) : [];
-  if (distractors.length < 2) return false;
+  if (usableDistractors(cloze.distractors, cloze.answer).length < 2) return false;
   const withoutBlank = cloze.sentence.split(BLANK).join(' ').toLowerCase();
   const re = new RegExp(`\\b${escapeRegExp(cloze.answer.trim().toLowerCase())}\\b`);
   return !re.test(withoutBlank);
@@ -144,14 +167,14 @@ async function generateDrills(db, body, deps = {}) {
         cloze: {
           sentence: ai.cloze.sentence,
           answer: ai.cloze.answer.trim(),
-          distractors: ai.cloze.distractors.filter((d) => typeof d === 'string' && d.trim()).slice(0, 3),
+          distractors: usableDistractors(ai.cloze.distractors, ai.cloze.answer).slice(0, 3),
         },
         hook: typeof ai.hook === 'string' && ai.hook.trim() ? ai.hook.trim() : null,
         confusables: Array.isArray(ai.confusables) ? ai.confusables.filter((c) => typeof c === 'string') : [],
       };
     }
     const local = clozeFromExamples(row);
-    if (local) local.distractors = pickDistractors(pool, local.answer, bareWord(row.word));
+    if (local) local.distractors = usableDistractors(pickDistractors(pool, local.answer, bareWord(row.word)), local.answer);
     return {
       wordId: row.id,
       cloze: local && validCloze(local) ? local : null,

@@ -480,4 +480,62 @@ describe('trouble word drills', () => {
     const out = await troubleDrills.generateDrills(db, { languageId, wordIds: distinctIds }, { generate: async () => [] });
     expect(out.length).toBe(8);
   });
+
+  // The client renders the options as `distractors + [answer]` and grades by string
+  // equality, so a distractor equal to the answer makes two options simultaneously
+  // correct — and duplicate strings also collide in the SwiftUI `ForEach(id: \.self)`.
+  const optionsOf = (cloze) => [...cloze.distractors, cloze.answer].map((o) => o.trim().toLowerCase());
+
+  test('drops an AI distractor that repeats the answer', async () => {
+    const { db, languageId, ids } = seed();
+    const generate = async () => ([{
+      wordId: ids.liggen,
+      cloze: { sentence: 'Het boek ____ op de tafel.', answer: 'ligt', distractors: ['legt', 'ligt', 'legde'] },
+      hook: 'kept',
+    }]);
+    const out = await troubleDrills.generateDrills(db, { languageId, wordIds: [ids.liggen] }, { generate });
+    // Still the AI cloze — two distinct distractors survive, so it stays valid.
+    expect(out[0].hook).toBe('kept');
+    expect(out[0].cloze.distractors).toEqual(['legt', 'legde']);
+    expect(optionsOf(out[0].cloze).filter((o) => o === 'ligt')).toHaveLength(1);
+  });
+
+  test('de-duplicates AI distractors that differ only by case or whitespace', async () => {
+    const { db, languageId, ids } = seed();
+    const generate = async () => ([{
+      wordId: ids.liggen,
+      cloze: { sentence: 'Het boek ____ op de tafel.', answer: 'ligt', distractors: ['legt', 'Legt ', 'legde'] },
+      hook: 'kept',
+    }]);
+    const out = await troubleDrills.generateDrills(db, { languageId, wordIds: [ids.liggen] }, { generate });
+    expect(out[0].hook).toBe('kept');
+    expect(out[0].cloze.distractors).toEqual(['legt', 'legde']);
+    const options = optionsOf(out[0].cloze);
+    expect(new Set(options).size).toBe(options.length);
+  });
+
+  test('rejects an AI cloze left with fewer than 2 distractors after de-duplication', async () => {
+    const { db, languageId, ids } = seed();
+    // Three distractors on paper, but one repeats the answer and one is a case variant
+    // of the other -> a single usable distractor, so the pack must take the local path.
+    const generate = async () => ([{
+      wordId: ids.liggen,
+      cloze: { sentence: 'Het boek ____ op de tafel.', answer: 'ligt', distractors: ['legt', 'LEGT', 'Ligt'] },
+      hook: 'discarded with the cloze',
+    }]);
+    const out = await troubleDrills.generateDrills(db, { languageId, wordIds: [ids.liggen] }, { generate });
+    expect(out[0].hook).toBeNull();
+    expect(out[0].cloze.sentence).toContain('____');
+    expect(out[0].cloze.distractors.length).toBeGreaterThanOrEqual(2);
+    expect(out[0].cloze.distractors).not.toContain('legt');
+  });
+
+  test('the local fallback cloze emits no duplicate options either', async () => {
+    const { db, languageId, ids } = seed();
+    const generate = async () => { throw new Error('gemini down'); };
+    const out = await troubleDrills.generateDrills(db, { languageId, wordIds: [ids.liggen] }, { generate });
+    const options = optionsOf(out[0].cloze);
+    expect(options.length).toBeGreaterThanOrEqual(3);
+    expect(new Set(options).size).toBe(options.length);
+  });
 });
