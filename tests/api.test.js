@@ -383,3 +383,73 @@ describe('trouble words pool', () => {
     expect(res.body.map((w) => w.word)).toEqual(['een']);
   });
 });
+
+describe('trouble word drills', () => {
+  const { openDatabase } = require('../src/db');
+  const troubleDrills = require('../src/services/troubleDrills');
+
+  function seed() {
+    const db = openDatabase(':memory:');
+    const lang = db.prepare("INSERT INTO languages (name, code) VALUES ('Dutch','nl-NL')").run();
+    const set = db.prepare('INSERT INTO word_sets (name, languageId) VALUES (?,?)').run('Basics', lang.lastInsertRowid);
+    const insert = db.prepare(`INSERT INTO words (languageId, wordSetId, word, wordTranslated, definition, example1)
+                               VALUES (?,?,?,?,?,?)`);
+    const a = insert.run(lang.lastInsertRowid, set.lastInsertRowid, 'liggen', 'دراز کشیدن', 'to lie', 'Het boek ligt op de tafel.');
+    const b = insert.run(lang.lastInsertRowid, set.lastInsertRowid, 'de tafel', 'میز', 'the table', null);
+    // Filler so the local fallback has enough candidates to build distractors from.
+    for (const filler of ['leggen', 'zitten', 'staan', 'lopen']) {
+      insert.run(lang.lastInsertRowid, set.lastInsertRowid, filler, filler, filler, null);
+    }
+    return { db, languageId: lang.lastInsertRowid, ids: { liggen: a.lastInsertRowid, tafel: b.lastInsertRowid } };
+  }
+
+  test('uses the AI drill when it is well formed', async () => {
+    const { db, languageId, ids } = seed();
+    const generate = async () => ([{
+      wordId: ids.liggen,
+      cloze: { sentence: 'Het boek ____ op de tafel.', answer: 'ligt', distractors: ['legt', 'liggen', 'legde'] },
+      hook: 'liGGen lies by itself; leGGen needs an object.',
+      confusables: ['leggen'],
+    }]);
+    const out = await troubleDrills.generateDrills(db, { languageId, wordIds: [ids.liggen] }, { generate });
+    expect(out).toHaveLength(1);
+    expect(out[0].cloze.answer).toBe('ligt');
+    expect(out[0].hook).toMatch(/liGGen/);
+    expect(out[0].confusables).toEqual(['leggen']);
+  });
+
+  test('falls back to the word own example when AI fails', async () => {
+    const { db, languageId, ids } = seed();
+    const generate = async () => { throw new Error('gemini down'); };
+    const out = await troubleDrills.generateDrills(db, { languageId, wordIds: [ids.liggen, ids.tafel] }, { generate });
+    const byId = Object.fromEntries(out.map((d) => [d.wordId, d]));
+    expect(byId[ids.liggen].cloze.sentence).toContain('____');
+    expect(byId[ids.liggen].cloze.sentence).not.toMatch(/ligt/i);
+    expect(byId[ids.liggen].cloze.distractors.length).toBeGreaterThanOrEqual(2);
+    expect(byId[ids.liggen].hook).toBeNull();
+    // No example sentence and no AI -> no cloze at all; the client skips rung 2.
+    expect(byId[ids.tafel].cloze).toBeNull();
+  });
+
+  test('rejects a malformed AI cloze and falls back', async () => {
+    const { db, languageId, ids } = seed();
+    // No blank marker, and the answer is visible in the sentence.
+    const generate = async () => ([{
+      wordId: ids.liggen,
+      cloze: { sentence: 'Het boek ligt op de tafel.', answer: 'ligt', distractors: ['legt'] },
+      hook: 'ignored',
+    }]);
+    const out = await troubleDrills.generateDrills(db, { languageId, wordIds: [ids.liggen] }, { generate });
+    expect(out[0].cloze.sentence).toContain('____');
+    expect(out[0].hook).toBeNull();
+  });
+
+  test('caps the request at 8 words and rejects an empty list', async () => {
+    const { db, languageId, ids } = seed();
+    await expect(troubleDrills.generateDrills(db, { languageId, wordIds: [] }, { generate: async () => [] }))
+      .rejects.toThrow(/wordIds/);
+    const many = Array.from({ length: 20 }, () => ids.liggen);
+    const out = await troubleDrills.generateDrills(db, { languageId, wordIds: many }, { generate: async () => [] });
+    expect(out.length).toBeLessThanOrEqual(8);
+  });
+});

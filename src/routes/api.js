@@ -6,6 +6,7 @@ const words = require('../services/words');
 const learning = require('../services/learning');
 const sync = require('../services/sync');
 const quiz = require('../services/quiz');
+const troubleDrills = require('../services/troubleDrills');
 
 const router = express.Router();
 const db = (req) => req.app.locals.db;
@@ -62,6 +63,7 @@ router.get('/stats', asyncHandler((req, res) => res.json(learning.stats(db(req),
 router.get('/trouble-words', asyncHandler((req, res) => res.json(learning.troubleWords(db(req), {
   languageId: req.query.languageId, setId: req.query.setId, limit: req.query.limit,
 }))));
+router.post('/trouble-words/drill', asyncHandler(async (req, res) => res.json(await troubleDrills.generateDrills(db(req), req.body))));
 
 // ---- Quiz ----
 router.post('/quiz/generate', asyncHandler(async (req, res) => res.json(await quiz.generateQuiz(db(req), req.body))));
