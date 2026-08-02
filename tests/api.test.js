@@ -278,3 +278,58 @@ describe('quiz', () => {
     expect(['de', 'het']).toContain(res.body[0].correctAnswer);
   });
 });
+
+describe('lapse tracking', () => {
+  const { app } = makeApp();
+  const api = client(app);
+  let langId; let setId; let wordId;
+
+  beforeAll(async () => {
+    langId = (await api.post('/api/languages').send({ name: 'Dutch', code: 'nl-NL' })).body.id;
+    setId = (await api.post('/api/sets').send({ name: 'Basics', languageId: langId })).body.id;
+    wordId = (await api.post('/api/words').send({
+      word: 'liggen', wordTranslated: 'دراز کشیدن', definition: 'to lie',
+      languageId: langId, wordSetId: setId,
+    })).body.id;
+    await api.post(`/api/review/${wordId}/learned`);
+  });
+
+  test('marking learned is not a lapse', async () => {
+    const res = await api.get('/api/stats').query({ languageId: langId });
+    expect(res.body.troubleWords).toBe(0);
+  });
+
+  test('incorrect opens a lapse and counts it', async () => {
+    await api.post(`/api/practice/${wordId}/incorrect`);
+    const w = (await api.get(`/api/words/${wordId}`)).body;
+    expect(w.lapseCount).toBe(1);
+    expect(w.openLapse).toBe(1);
+    expect(w.lastLapsedAt).toEqual(expect.any(String));
+    const stats = (await api.get('/api/stats').query({ languageId: langId })).body;
+    expect(stats.troubleWords).toBe(1);
+  });
+
+  test('correct closes the lapse but keeps the lifetime count', async () => {
+    await api.post(`/api/practice/${wordId}/correct`);
+    const w = (await api.get(`/api/words/${wordId}`)).body;
+    expect(w.openLapse).toBe(0);
+    expect(w.lapseCount).toBe(1);
+    const stats = (await api.get('/api/stats').query({ languageId: langId })).body;
+    expect(stats.troubleWords).toBe(0);
+  });
+
+  test('a second failure increments the lifetime count', async () => {
+    await api.post(`/api/practice/${wordId}/incorrect`);
+    const w = (await api.get(`/api/words/${wordId}`)).body;
+    expect(w.lapseCount).toBe(2);
+    expect(w.openLapse).toBe(1);
+  });
+
+  test('reset clears all lapse state', async () => {
+    await api.post(`/api/languages/${langId}/reset`);
+    const w = (await api.get(`/api/words/${wordId}`)).body;
+    expect(w.lapseCount).toBe(0);
+    expect(w.openLapse).toBe(0);
+    expect(w.lastLapsedAt).toBeNull();
+  });
+});

@@ -39,6 +39,9 @@ CREATE TABLE IF NOT EXISTS words (
   nextPracticeDate TEXT,
   isLearned INTEGER NOT NULL DEFAULT 0,
   lastReviewedDate TEXT,
+  lapseCount INTEGER NOT NULL DEFAULT 0,
+  openLapse INTEGER NOT NULL DEFAULT 0,
+  lastLapsedAt TEXT,
   grammar TEXT,
   createdAt TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   updatedAt TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
@@ -72,6 +75,15 @@ function migrate(db) {
   const wordCols = db.prepare('PRAGMA table_info(words)').all().map((c) => c.name);
   if (!wordCols.includes('grammar')) {
     db.exec('ALTER TABLE words ADD COLUMN grammar TEXT');
+  }
+  if (!wordCols.includes('lapseCount')) {
+    db.exec('ALTER TABLE words ADD COLUMN lapseCount INTEGER NOT NULL DEFAULT 0');
+  }
+  if (!wordCols.includes('openLapse')) {
+    db.exec('ALTER TABLE words ADD COLUMN openLapse INTEGER NOT NULL DEFAULT 0');
+  }
+  if (!wordCols.includes('lastLapsedAt')) {
+    db.exec('ALTER TABLE words ADD COLUMN lastLapsedAt TEXT');
   }
 }
 
