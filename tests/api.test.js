@@ -333,3 +333,53 @@ describe('lapse tracking', () => {
     expect(w.lastLapsedAt).toBeNull();
   });
 });
+
+describe('trouble words pool', () => {
+  const { app } = makeApp();
+  const api = client(app);
+  let langId; let setId; const ids = {};
+
+  const addWord = async (word) => (await api.post('/api/words').send({
+    word, wordTranslated: word, definition: word,
+    languageId: langId, wordSetId: setId,
+  })).body.id;
+
+  beforeAll(async () => {
+    langId = (await api.post('/api/languages').send({ name: 'Dutch', code: 'nl-NL' })).body.id;
+    setId = (await api.post('/api/sets').send({ name: 'Basics', languageId: langId })).body.id;
+    for (const w of ['een', 'twee', 'drie']) {
+      ids[w] = await addWord(w);
+      await api.post(`/api/review/${ids[w]}/learned`);
+    }
+    // 'een' fails twice, 'twee' once, 'drie' never.
+    await api.post(`/api/practice/${ids.een}/incorrect`);
+    await api.post(`/api/practice/${ids.een}/correct`);
+    await api.post(`/api/practice/${ids.een}/incorrect`);
+    await api.post(`/api/practice/${ids.twee}/incorrect`);
+  });
+
+  test('pool holds only words with an open lapse, worst first', async () => {
+    const res = await api.get('/api/trouble-words').query({ languageId: langId });
+    expect(res.status).toBe(200);
+    expect(res.body.map((w) => w.word)).toEqual(['een', 'twee']);
+    expect(res.body[0].lapseCount).toBe(2);
+  });
+
+  test('limit is honoured', async () => {
+    const res = await api.get('/api/trouble-words').query({ languageId: langId, limit: 1 });
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].word).toBe('een');
+  });
+
+  test('words are serialized like every other word DTO', async () => {
+    const res = await api.get('/api/trouble-words').query({ languageId: langId });
+    expect(res.body[0].isLearned).toBe(true);
+    expect(res.body[0]).toHaveProperty('grammar');
+  });
+
+  test('passing a word in practice removes it from the pool', async () => {
+    await api.post(`/api/practice/${ids.twee}/correct`);
+    const res = await api.get('/api/trouble-words').query({ languageId: langId });
+    expect(res.body.map((w) => w.word)).toEqual(['een']);
+  });
+});

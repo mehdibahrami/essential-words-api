@@ -59,6 +59,9 @@ router.post('/practice/:wordId/incorrect', asyncHandler((req, res) => res.json(l
 
 // ---- Stats ----
 router.get('/stats', asyncHandler((req, res) => res.json(learning.stats(db(req), { languageId: req.query.languageId, setId: req.query.setId }))));
+router.get('/trouble-words', asyncHandler((req, res) => res.json(learning.troubleWords(db(req), {
+  languageId: req.query.languageId, setId: req.query.setId, limit: req.query.limit,
+}))));
 
 // ---- Quiz ----
 router.post('/quiz/generate', asyncHandler(async (req, res) => res.json(await quiz.generateQuiz(db(req), req.body))));

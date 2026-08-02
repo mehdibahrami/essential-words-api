@@ -65,6 +65,24 @@ function practiceIncorrect(db, wordId, now = new Date()) {
   });
 }
 
+/**
+ * Words the user failed in Practice and has not yet re-passed. Ranked by lifetime
+ * severity first, then recency, so chronic problem words come before one-off slips.
+ */
+function troubleWords(db, { languageId, setId, limit = 8 } = {}) {
+  const clauses = ['deletedAt IS NULL', 'openLapse = 1'];
+  const params = { limit: Number(limit) || 8 };
+  scope(clauses, params, { languageId, setId });
+  return db
+    .prepare(
+      `SELECT * FROM words WHERE ${clauses.join(' AND ')}
+       ORDER BY lapseCount DESC, lastLapsedAt DESC, id ASC
+       LIMIT @limit`
+    )
+    .all(params)
+    .map((r) => serializeWord(r, db));
+}
+
 function stats(db, { languageId, setId } = {}) {
   const base = ['deletedAt IS NULL'];
   const params = { now: nowIso() };
@@ -94,4 +112,4 @@ function resetProgress(db, { languageId, setId } = {}) {
   return { reset: info.changes };
 }
 
-module.exports = { reviewNext, practiceNext, markLearned, practiceCorrect, practiceIncorrect, stats, resetProgress };
+module.exports = { reviewNext, practiceNext, markLearned, practiceCorrect, practiceIncorrect, troubleWords, stats, resetProgress };
