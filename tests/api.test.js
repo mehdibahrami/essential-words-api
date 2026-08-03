@@ -538,4 +538,52 @@ describe('trouble word drills', () => {
     expect(options.length).toBeGreaterThanOrEqual(3);
     expect(new Set(options).size).toBe(options.length);
   });
+
+  test('the local fallback cloze carries the example translation', async () => {
+    const { db, languageId, ids } = seed();
+    db.prepare('UPDATE words SET example1Translated = ? WHERE id = ?')
+      .run('The book is lying on the table.', ids.liggen);
+    const generate = async () => { throw new Error('gemini down'); };
+    const out = await troubleDrills.generateDrills(db, { languageId, wordIds: [ids.liggen] }, { generate });
+    expect(out[0].cloze.sentenceTranslation).toBe('The book is lying on the table.');
+  });
+
+  test('a word with no example translation still yields a valid cloze', async () => {
+    const { db, languageId, ids } = seed();
+    const generate = async () => { throw new Error('gemini down'); };
+    const out = await troubleDrills.generateDrills(db, { languageId, wordIds: [ids.liggen] }, { generate });
+    expect(out[0].cloze.sentence).toContain('____');
+    expect(out[0].cloze.sentenceTranslation).toBeNull();
+  });
+
+  test('an AI sentence translation passes through, a non-string one is nulled', async () => {
+    const { db, languageId, ids } = seed();
+    const packFor = (translation) => async () => ([{
+      wordId: ids.liggen,
+      cloze: {
+        sentence: 'Het boek ____ op de tafel.',
+        answer: 'ligt',
+        distractors: ['legt', 'legde'],
+        sentenceTranslation: translation,
+      },
+      hook: 'kept',
+    }]);
+
+    const good = await troubleDrills.generateDrills(db, { languageId, wordIds: [ids.liggen] }, { generate: packFor('  The book lies on the table. ') });
+    expect(good[0].cloze.sentenceTranslation).toBe('The book lies on the table.');
+
+    for (const bad of [42, null, '   ']) {
+      const out = await troubleDrills.generateDrills(db, { languageId, wordIds: [ids.liggen] }, { generate: packFor(bad) });
+      expect(out[0].cloze.sentenceTranslation).toBeNull();
+      expect(out[0].hook).toBe('kept'); // the cloze itself is still valid
+    }
+  });
+
+  test('the requested CEFR level reaches the drill prompt', () => {
+    const language = { name: 'Dutch', code: 'nl-NL' };
+    const rows = [{ id: 1, word: 'liggen', partOfSpeech: 'verb', definition: 'to lie' }];
+    expect(troubleDrills.drillPrompt(language, rows, 'B2')).toContain('B2');
+    // The default must still be a usable prompt when no level is given.
+    expect(troubleDrills.drillPrompt(language, rows)).toContain('A1');
+  });
 });

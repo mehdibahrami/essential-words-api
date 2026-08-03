@@ -14,6 +14,11 @@ function bareWord(word) {
   return String(word || '').replace(/^\s*(de|het)\s+/i, '').trim();
 }
 
+/** A trimmed non-empty string, or null. Used for every optional text field we return. */
+function cleanText(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
 /**
  * Blank the word out of one of its own example sentences.
  *
@@ -26,12 +31,26 @@ function bareWord(word) {
 function clozeFromExamples(row) {
   const stem = bareWord(row.word).toLowerCase();
   if (stem.length < 3) return null;
-  for (const sentence of [row.example1, row.example2, row.example3]) {
+  const examples = [
+    [row.example1, row.example1Translated],
+    [row.example2, row.example2Translated],
+    [row.example3, row.example3Translated],
+  ];
+  for (const [sentence, translated] of examples) {
     if (!sentence) continue;
     for (let len = stem.length; len >= 3; len--) {
       const re = new RegExp(`\\b${escapeRegExp(stem.slice(0, len))}\\w*`, 'i');
       const m = sentence.match(re);
-      if (m) return { sentence: sentence.replace(re, BLANK), answer: m[0], distractors: [] };
+      if (m) {
+        return {
+          sentence: sentence.replace(re, BLANK),
+          answer: m[0],
+          distractors: [],
+          // The cloze IS this example with a blank cut into it, so its stored
+          // translation describes exactly the sentence the learner is shown.
+          sentenceTranslation: cleanText(translated),
+        };
+      }
     }
   }
   return null;
@@ -105,7 +124,7 @@ function validCloze(cloze) {
   return !re.test(withoutBlank);
 }
 
-function drillPrompt(language, rows) {
+function drillPrompt(language, rows, level = 'A1') {
   const list = rows
     .map((r) => `- id ${r.id}: "${r.word}" (${r.partOfSpeech || 'unknown'}) = ${r.definition || r.wordTranslated}`)
     .join('\n');
@@ -113,12 +132,15 @@ function drillPrompt(language, rows) {
     `The student keeps forgetting these ${language.name} (${language.code}) words:`,
     list,
     '',
+    `Write every sentence at CEFR level ${level} — vocabulary and grammar the student can read at that level.`,
+    '',
     `For EACH word return one object with:`,
     `- "wordId": the numeric id given above.`,
-    `- "cloze": { "sentence", "answer", "distractors" } — a short natural ${language.name} sentence that uses the word,`,
+    `- "cloze": { "sentence", "answer", "distractors", "sentenceTranslation" } — a short natural ${language.name} sentence that uses the word,`,
     `  with the word replaced by exactly "${BLANK}". "answer" is the exact form that belongs in the blank`,
     `  (it may be inflected). "distractors" is 3 wrong forms that are plausible but clearly incorrect here.`,
     `  The answer must NOT appear anywhere else in the sentence.`,
+    `  "sentenceTranslation" is a natural English translation of the COMPLETE sentence with the blank filled in.`,
     `- "hook": one or two sentences of memory aid — a mnemonic, an etymology, or a sharp contrast with the word`,
     `  it is most often confused with. Written in English. Make it concrete and visual, not a restatement of the definition.`,
     `- "confusables": an array of ${language.name} words this one is easily mixed up with (may be empty).`,
@@ -133,7 +155,7 @@ function drillPrompt(language, rows) {
  * something unusable, so a session is always startable.
  */
 async function generateDrills(db, body, deps = {}) {
-  const { languageId, setId = null, wordIds = [] } = body || {};
+  const { languageId, setId = null, wordIds = [], level = 'A1' } = body || {};
   if (languageId == null) throw badRequest('languageId is required');
   const language = getLanguage(db, languageId);
   if (!language || language.deletedAt) throw badRequest('languageId does not reference an existing language');
@@ -151,7 +173,7 @@ async function generateDrills(db, body, deps = {}) {
   const aiById = new Map();
   try {
     const generate = deps.generate || generateQuizFromPrompt;
-    const raw = await generate(drillPrompt(language, rows));
+    const raw = await generate(drillPrompt(language, rows, level));
     for (const entry of Array.isArray(raw) ? raw : []) {
       if (entry && entry.wordId != null) aiById.set(Number(entry.wordId), entry);
     }
@@ -168,6 +190,7 @@ async function generateDrills(db, body, deps = {}) {
           sentence: ai.cloze.sentence,
           answer: ai.cloze.answer.trim(),
           distractors: usableDistractors(ai.cloze.distractors, ai.cloze.answer).slice(0, 3),
+          sentenceTranslation: cleanText(ai.cloze.sentenceTranslation),
         },
         hook: typeof ai.hook === 'string' && ai.hook.trim() ? ai.hook.trim() : null,
         confusables: Array.isArray(ai.confusables) ? ai.confusables.filter((c) => typeof c === 'string') : [],
