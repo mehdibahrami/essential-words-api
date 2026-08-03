@@ -56,3 +56,51 @@ test('articles quiz rejects non-Dutch languages', async () => {
     quiz.generateQuiz(db, { languageId: en.id, contentSource: 'articles', numQuestions: 5 })
   ).rejects.toThrow(/Dutch/);
 });
+
+describe('question translations', () => {
+  const quiz = require('../src/services/quiz');
+
+  test('keeps a translation only for multi-word sentences', () => {
+    expect(quiz.questionTranslationFor('Het boek ____ op de tafel.', 'The book lies on the table.', 'leitnerBoxes'))
+      .toBe('The book lies on the table.');
+    // A bare headword: the options already are its meaning.
+    expect(quiz.questionTranslationFor('liggen', 'to lie', 'leitnerBoxes')).toBeNull();
+  });
+
+  test('"ik + hebben" is two word tokens, not three', () => {
+    // Naive whitespace splitting counts 3 here and would leak a translation.
+    expect(quiz.questionTranslationFor('ik + hebben', 'I have', 'leitnerBoxes')).toBeNull();
+  });
+
+  test('verbConjugation and articles never carry a translation', () => {
+    for (const source of ['verbConjugation', 'articles']) {
+      expect(quiz.questionTranslationFor('Het boek ligt op de tafel.', 'The book lies on the table.', source)).toBeNull();
+    }
+  });
+
+  test('a missing or non-string translation becomes null', () => {
+    for (const bad of [undefined, null, 99, '  ']) {
+      expect(quiz.questionTranslationFor('Het boek ____ op de tafel.', bad, 'leitnerBoxes')).toBeNull();
+    }
+  });
+
+  test('generateQuiz stamps the field on every question', async () => {
+    const { openDatabase } = require('../src/db');
+    const db = openDatabase(':memory:');
+    const lang = db.prepare("INSERT INTO languages (name, code) VALUES ('Dutch','nl-NL')").run();
+    const languageId = lang.lastInsertRowid;
+    const set = db.prepare('INSERT INTO word_sets (name, languageId) VALUES (?, ?)').run('S', languageId);
+    const wordSetId = set.lastInsertRowid;
+    db.prepare('INSERT INTO words (languageId, wordSetId, word, wordTranslated, definition, leitnerBox) VALUES (?,?,?,?,?,1)')
+      .run(languageId, wordSetId, 'liggen', 'دراز کشیدن', 'to lie');
+
+    const generate = async () => ([
+      { questionDescription: 'Fill in the blank:', questionItself: 'Het boek ____ op de tafel.', options: ['ligt', 'legt', 'lag', 'leggen'], correctAnswer: 'ligt', questionTranslation: 'The book lies on the table.' },
+      { questionDescription: 'Choose the definition:', questionItself: 'liggen', options: ['to lie', 'to lay', 'to sit', 'to stand'], correctAnswer: 'to lie', questionTranslation: 'to lie' },
+    ]);
+
+    const out = await quiz.generateQuiz(db, { languageId, contentSource: 'leitnerBoxes', leitnerBoxes: [1], numQuestions: 2 }, { generate });
+    expect(out[0].questionTranslation).toBe('The book lies on the table.');
+    expect(out[1].questionTranslation).toBeNull();
+  });
+});

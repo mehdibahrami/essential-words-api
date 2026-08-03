@@ -11,6 +11,28 @@ function shuffle(arr) {
   return a;
 }
 
+/** Content sources whose questions can be full sentences worth translating. */
+const TRANSLATABLE_SOURCES = new Set(['leitnerBoxes', 'customTopic']);
+/** Below this many word tokens, a question is a headword or a conjugation cue, not a sentence. */
+const SENTENCE_MIN_WORDS = 3;
+
+/**
+ * The English translation to attach to a question, or null.
+ *
+ * Decided here rather than trusted from the model, behind two independent gates: the
+ * content source must be one that produces sentences, and the question must actually
+ * read as a sentence. Tokens are filtered to those containing a letter, because
+ * "ik + hebben" is three whitespace-separated tokens but only two words — a naive
+ * whitespace count would leak translations onto conjugation prompts.
+ */
+function questionTranslationFor(questionItself, supplied, contentSource) {
+  if (!TRANSLATABLE_SOURCES.has(contentSource)) return null;
+  const text = typeof questionItself === 'string' ? questionItself.trim() : '';
+  const words = text.split(/\s+/).filter((t) => /\p{L}/u.test(t));
+  if (words.length < SENTENCE_MIN_WORDS) return null;
+  return typeof supplied === 'string' && supplied.trim() ? supplied.trim() : null;
+}
+
 /** Live (non-deleted) words for a language, optionally scoped to a set. */
 function wordsFor(db, languageId, setId) {
   const clauses = ['deletedAt IS NULL', 'languageId = @languageId'];
@@ -45,7 +67,7 @@ function vocabPrompt(language, cfg, words) {
 
   const descLang = questionsInEnglish ? 'English' : language.name;
   prompt += `IMPORTANT: The 'questionDescription' (the instruction, e.g. 'Choose the correct definition:') MUST be in ${descLang}. The 'questionItself' (the actual word, phrase, or sentence being asked about) MUST ALWAYS remain in ${language.name} — never translate it. The answer options should be in ${language.name}.\n`;
-  prompt += "Each question should have 4 options, and one correct answer. Please provide the output as a JSON array of objects, where each object has 'questionDescription' (String), 'questionItself' (String), 'options' (Array of Strings), and 'correctAnswer' (String - the text of the correct option).";
+  prompt += "Each question should have 4 options, and one correct answer. Please provide the output as a JSON array of objects, where each object has 'questionDescription' (String), 'questionItself' (String), 'options' (Array of Strings), 'correctAnswer' (String - the text of the correct option), and 'questionTranslation' (String or null - a natural English translation of the COMPLETE 'questionItself' sentence with any blank filled in, ONLY when 'questionItself' is a full sentence; use null when it is a single word or short phrase).";
   return prompt;
 }
 
@@ -91,6 +113,7 @@ function dutchArticleQuiz(language, cfg, words) {
       questionItself: noun,
       options: ['de', 'het'],
       correctAnswer: article,
+      questionTranslation: null,
     });
   }
   if (!questions.length) throw badRequest('Could not generate any valid article questions.');
@@ -132,7 +155,10 @@ async function generateQuiz(db, body, deps = {}) {
 
   const gen = deps.generate || generateQuizFromPrompt;
   const questions = await gen(prompt);
-  return questions.slice(0, cfg.numQuestions);
+  return questions.slice(0, cfg.numQuestions).map((q) => ({
+    ...q,
+    questionTranslation: questionTranslationFor(q.questionItself, q.questionTranslation, contentSource),
+  }));
 }
 
-module.exports = { generateQuiz, vocabPrompt, verbConjugationPrompt, dutchArticleQuiz };
+module.exports = { generateQuiz, vocabPrompt, verbConjugationPrompt, dutchArticleQuiz, questionTranslationFor };
