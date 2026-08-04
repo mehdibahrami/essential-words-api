@@ -67,6 +67,8 @@ router.post('/trouble-words/drill', asyncHandler(async (req, res) => res.json(aw
 
 // ---- Quiz ----
 router.post('/quiz/generate', asyncHandler(async (req, res) => res.json(await quiz.generateQuiz(db(req), req.body))));
+router.post('/quiz/lapses', asyncHandler((req, res) =>
+  res.json(learning.openLapses(db(req), req.body.wordIds))));
 router.post('/quiz/material', asyncHandler(async (req, res) =>
   res.json(await troubleDrills.generateDrills(db(req), { ...req.body, limit: req.body.limit ?? troubleDrills.MAX_MATERIAL_WORDS }))));
 

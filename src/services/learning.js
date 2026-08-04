@@ -112,4 +112,37 @@ function resetProgress(db, { languageId, setId } = {}) {
   return { reset: info.changes };
 }
 
-module.exports = { reviewNext, practiceNext, markLearned, practiceCorrect, practiceIncorrect, troubleWords, stats, resetProgress };
+/**
+ * Mark words as lapsed from a quiz session.
+ *
+ * Writes exactly the three lapse columns `practiceIncorrect` writes and nothing
+ * else — no `leitnerBox`, no `nextPracticeDate`. Scheduling has one authority and
+ * it is the Practice flow; a quiz is a self-test, not a review.
+ *
+ * Unknown or deleted ids are skipped rather than throwing: the client sends whatever
+ * it happened to ask about, and a word deleted mid-session must not fail the flush.
+ */
+function openLapses(db, wordIds = [], now = new Date()) {
+  const ids = [...new Set((wordIds || []).map(Number).filter(Number.isFinite))];
+  if (!ids.length) return { updated: 0 };
+
+  const stmt = db.prepare(`
+    UPDATE words
+       SET lapseCount = lapseCount + 1,
+           openLapse = 1,
+           lastLapsedAt = @now
+     WHERE id = @id AND deletedAt IS NULL
+  `);
+
+  const run = db.transaction((list) => {
+    let updated = 0;
+    for (const id of list) {
+      updated += stmt.run({ id, now: now.toISOString() }).changes;
+    }
+    return updated;
+  });
+
+  return { updated: run(ids) };
+}
+
+module.exports = { reviewNext, practiceNext, markLearned, practiceCorrect, practiceIncorrect, openLapses, troubleWords, stats, resetProgress };

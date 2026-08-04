@@ -587,3 +587,91 @@ describe('trouble word drills', () => {
     expect(troubleDrills.drillPrompt(language, rows)).toContain('A1');
   });
 });
+
+describe('quiz lapses', () => {
+  const { app } = makeApp();
+  const api = client(app);
+  let langId; let setId; let wordId;
+
+  beforeAll(async () => {
+    langId = (await api.post('/api/languages').send({ name: 'Dutch', code: 'nl-NL' })).body.id;
+    setId = (await api.post('/api/sets').send({ name: 'Basics', languageId: langId })).body.id;
+    wordId = (await api.post('/api/words').send({
+      languageId: langId, wordSetId: setId,
+      word: 'de tafel', wordTranslated: 'the table', partOfSpeech: 'noun',
+      definition: 'the table', definitionTranslated: 'de tafel',
+    })).body.id;
+    await api.post(`/api/review/${wordId}/learned`);
+    // markLearned itself sets leitnerBox to 1, which is also the value a broken
+    // openLapses might hardcode (mirroring practiceIncorrect's box reset). Advance
+    // past box 1 here so the "unchanged" assertion below can't pass vacuously.
+    await api.post(`/api/practice/${wordId}/correct`);
+  });
+
+  test('opens a lapse without touching Leitner state', async () => {
+    const before = (await api.get(`/api/words/${wordId}`)).body;
+    expect(before.leitnerBox).not.toBe(1);
+    const res = await api.post('/api/quiz/lapses').send({ wordIds: [wordId] });
+    expect(res.status).toBe(200);
+
+    const after = (await api.get(`/api/words/${wordId}`)).body;
+    expect(after.openLapse).toBe(1);
+    expect(after.lapseCount).toBe(1);
+    expect(after.lastLapsedAt).toBeTruthy();
+    expect(after.leitnerBox).toBe(before.leitnerBox);
+    expect(after.nextPracticeDate).toBe(before.nextPracticeDate);
+  });
+
+  test('the word appears in the trouble list and in stats', async () => {
+    const list = await api.get(`/api/trouble-words?languageId=${langId}`);
+    expect(list.body.map((w) => w.id)).toContain(wordId);
+    const stats = await api.get(`/api/stats?languageId=${langId}`);
+    expect(stats.body.troubleWords).toBeGreaterThanOrEqual(1);
+  });
+
+  test('a second lapse increments the lifetime count', async () => {
+    await api.post('/api/quiz/lapses').send({ wordIds: [wordId] });
+    const after = (await api.get(`/api/words/${wordId}`)).body;
+    expect(after.lapseCount).toBe(2);
+  });
+
+  test('practiceCorrect still closes the lapse', async () => {
+    await api.post(`/api/practice/${wordId}/correct`);
+    const after = (await api.get(`/api/words/${wordId}`)).body;
+    expect(after.openLapse).toBe(0);
+    expect(after.lapseCount).toBe(2);
+  });
+
+  test('unknown ids are ignored rather than erroring', async () => {
+    const res = await api.post('/api/quiz/lapses').send({ wordIds: [999999] });
+    expect(res.status).toBe(200);
+    expect(res.body.updated).toBe(0);
+  });
+
+  test('an empty list is a no-op, not a 400', async () => {
+    const res = await api.post('/api/quiz/lapses').send({ wordIds: [] });
+    expect(res.status).toBe(200);
+    expect(res.body.updated).toBe(0);
+  });
+});
+
+describe('article questions carry a word id', () => {
+  const { app } = makeApp();
+  const api = client(app);
+
+  test('dutchArticleQuiz attaches wordId', async () => {
+    const langId = (await api.post('/api/languages').send({ name: 'Dutch', code: 'nl-NL' })).body.id;
+    const setId = (await api.post('/api/sets').send({ name: 'B', languageId: langId })).body.id;
+    const wordId = (await api.post('/api/words').send({
+      languageId: langId, wordSetId: setId,
+      word: 'de tafel', wordTranslated: 'the table', partOfSpeech: 'noun',
+      definition: 'the table', definitionTranslated: 'de tafel',
+    })).body.id;
+
+    const res = await api.post('/api/quiz/generate').send({
+      languageId: langId, setId, contentSource: 'articles', numQuestions: 5,
+    });
+    expect(res.status).toBe(200);
+    expect(res.body[0].wordId).toBe(wordId);
+  });
+});

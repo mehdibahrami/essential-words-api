@@ -109,6 +109,7 @@ function dutchArticleQuiz(language, cfg, words) {
     const article = parts[0];
     const noun = parts.slice(1).join(' ');
     questions.push({
+      wordId: w.id,
       questionDescription: 'Kies het juiste lidwoord:',
       questionItself: noun,
       options: ['de', 'het'],
