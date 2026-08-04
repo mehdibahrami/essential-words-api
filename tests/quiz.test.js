@@ -157,11 +157,37 @@ describe('quiz material', () => {
 
   test('limit caps how many words are processed', async () => {
     const db = app.locals.db;
-    const out = await generateDrills(
-      db,
-      { languageId: langId, setId, wordIds: [wordId], limit: 20 },
-      { generate: async () => { throw new Error('down'); } });
-    expect(out).toHaveLength(1);
+    const down = { generate: async () => { throw new Error('down'); } };
+
+    // Seed MORE words than either cap. Passing a single id here — as an earlier draft
+    // of this test did — makes the assertion pass whether or not the clamp exists.
+    const ids = [];
+    for (let i = 0; i < 25; i++) {
+      const res = await api.post('/api/words').send({
+        languageId: langId, wordSetId: setId,
+        word: `woord${i}`, wordTranslated: `word${i}`, partOfSpeech: 'noun',
+        definition: `definition ${i}`, definitionTranslated: `definitie ${i}`,
+        example1: `Dit is woord${i} hier.`, example1Translated: `This is word${i} here.`,
+      });
+      ids.push(res.body.id);
+    }
+
+    const material = await generateDrills(db, { languageId: langId, setId, wordIds: ids, limit: 20 }, down);
+    expect(material).toHaveLength(20);
+
+    // The trouble route's default is unchanged at 8.
+    const drill = await generateDrills(db, { languageId: langId, setId, wordIds: ids }, down);
+    expect(drill).toHaveLength(8);
+
+    // A caller cannot exceed MAX_MATERIAL_WORDS by asking for more.
+    const overshoot = await generateDrills(db, { languageId: langId, setId, wordIds: ids, limit: 999 }, down);
+    expect(overshoot).toHaveLength(20);
+
+    // Junk limits fall back to the default rather than truncating to nothing.
+    for (const bad of [0, -5, 'abc', null]) {
+      const out = await generateDrills(db, { languageId: langId, setId, wordIds: ids, limit: bad }, down);
+      expect(out).toHaveLength(8);
+    }
   });
 
   test('POST /api/quiz/material rejects an empty wordIds list', async () => {

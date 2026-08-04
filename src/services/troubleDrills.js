@@ -169,7 +169,13 @@ async function generateDrills(db, body, deps = {}) {
   const language = getLanguage(db, languageId);
   if (!language || language.deletedAt) throw badRequest('languageId does not reference an existing language');
 
-  const cap = Math.min(Number(limit) || MAX_DRILL_WORDS, MAX_MATERIAL_WORDS);
+  // `Number(limit) || MAX_DRILL_WORDS` would treat 0 as unset and let a negative
+  // through to `slice`, which truncates from the end instead of capping.
+  const requested = Number(limit);
+  const cap = Math.min(
+    Number.isFinite(requested) && requested > 0 ? requested : MAX_DRILL_WORDS,
+    MAX_MATERIAL_WORDS
+  );
   const ids = [...new Set((wordIds || []).map(Number).filter(Number.isFinite))].slice(0, cap);
   if (!ids.length) throw badRequest('wordIds must contain at least one word id');
 
