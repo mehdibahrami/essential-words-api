@@ -3,6 +3,8 @@ const { getLanguage } = require('./languages');
 const { generateQuizFromPrompt } = require('./gemini');
 
 const MAX_DRILL_WORDS = 8;
+/** A hub session can be 30 exercises long, so it needs more material than a drill. */
+const MAX_MATERIAL_WORDS = 20;
 const BLANK = '____';
 
 function escapeRegExp(s) {
@@ -133,6 +135,7 @@ function drillPrompt(language, rows, level = 'A1') {
     list,
     '',
     `Write every sentence at CEFR level ${level} — vocabulary and grammar the student can read at that level.`,
+    `Every sentence must be between 4 and 8 words long. Longer sentences cannot be used as word-bank exercises.`,
     '',
     `For EACH word return one object with:`,
     `- "wordId": the numeric id given above.`,
@@ -149,18 +152,25 @@ function drillPrompt(language, rows, level = 'A1') {
   ].join('\n');
 }
 
+/** The complete sentence a cloze was cut from — what a word-bank exercise scrambles. */
+function unblank(cloze) {
+  if (!cloze || typeof cloze.sentence !== 'string') return null;
+  return cloze.sentence.split(BLANK).join(cloze.answer);
+}
+
 /**
  * Build a drill pack for the given word ids. One batched AI call; every word falls
  * back to a cloze cut from its own example sentences if the model fails or returns
  * something unusable, so a session is always startable.
  */
 async function generateDrills(db, body, deps = {}) {
-  const { languageId, setId = null, wordIds = [], level = 'A1' } = body || {};
+  const { languageId, setId = null, wordIds = [], level = 'A1', limit } = body || {};
   if (languageId == null) throw badRequest('languageId is required');
   const language = getLanguage(db, languageId);
   if (!language || language.deletedAt) throw badRequest('languageId does not reference an existing language');
 
-  const ids = [...new Set((wordIds || []).map(Number).filter(Number.isFinite))].slice(0, MAX_DRILL_WORDS);
+  const cap = Math.min(Number(limit) || MAX_DRILL_WORDS, MAX_MATERIAL_WORDS);
+  const ids = [...new Set((wordIds || []).map(Number).filter(Number.isFinite))].slice(0, cap);
   if (!ids.length) throw badRequest('wordIds must contain at least one word id');
 
   const rows = db
@@ -184,27 +194,35 @@ async function generateDrills(db, body, deps = {}) {
   return rows.map((row) => {
     const ai = aiById.get(row.id);
     if (ai && validCloze(ai.cloze)) {
+      const cloze = {
+        sentence: ai.cloze.sentence,
+        answer: ai.cloze.answer.trim(),
+        distractors: usableDistractors(ai.cloze.distractors, ai.cloze.answer).slice(0, 3),
+        sentenceTranslation: cleanText(ai.cloze.sentenceTranslation),
+      };
       return {
         wordId: row.id,
-        cloze: {
-          sentence: ai.cloze.sentence,
-          answer: ai.cloze.answer.trim(),
-          distractors: usableDistractors(ai.cloze.distractors, ai.cloze.answer).slice(0, 3),
-          sentenceTranslation: cleanText(ai.cloze.sentenceTranslation),
-        },
+        sentence: unblank(cloze),
+        cloze,
         hook: typeof ai.hook === 'string' && ai.hook.trim() ? ai.hook.trim() : null,
         confusables: Array.isArray(ai.confusables) ? ai.confusables.filter((c) => typeof c === 'string') : [],
       };
     }
     const local = clozeFromExamples(row);
     if (local) local.distractors = usableDistractors(pickDistractors(pool, local.answer, bareWord(row.word)), local.answer);
+    const usable = local && validCloze(local) ? local : null;
     return {
       wordId: row.id,
-      cloze: local && validCloze(local) ? local : null,
+      // A word-bank/sentence-scramble exercise needs no distractors, only the
+      // intact sentence — so `sentence` comes from `local` directly rather than
+      // `usable`. `cloze` (the multiple-choice exercise) still requires 2+
+      // distractors, so it can legitimately be null while `sentence` is not.
+      sentence: local ? unblank(local) : null,
+      cloze: usable,
       hook: null,
       confusables: [],
     };
   });
 }
 
-module.exports = { generateDrills, drillPrompt, clozeFromExamples, validCloze, MAX_DRILL_WORDS };
+module.exports = { generateDrills, drillPrompt, clozeFromExamples, validCloze, unblank, MAX_DRILL_WORDS, MAX_MATERIAL_WORDS };

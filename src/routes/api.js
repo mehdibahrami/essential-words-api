@@ -67,6 +67,8 @@ router.post('/trouble-words/drill', asyncHandler(async (req, res) => res.json(aw
 
 // ---- Quiz ----
 router.post('/quiz/generate', asyncHandler(async (req, res) => res.json(await quiz.generateQuiz(db(req), req.body))));
+router.post('/quiz/material', asyncHandler(async (req, res) =>
+  res.json(await troubleDrills.generateDrills(db(req), { ...req.body, limit: req.body.limit ?? troubleDrills.MAX_MATERIAL_WORDS }))));
 
 // ---- Sync ----
 router.get('/sync', asyncHandler((req, res) => res.json(sync.snapshot(db(req), req.query.since))));

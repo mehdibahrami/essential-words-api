@@ -1,3 +1,4 @@
+const { makeApp, client } = require('./helpers');
 const { openDatabase } = require('../src/db');
 const quiz = require('../src/services/quiz');
 const languages = require('../src/services/languages');
@@ -102,5 +103,77 @@ describe('question translations', () => {
     const out = await quiz.generateQuiz(db, { languageId, contentSource: 'leitnerBoxes', leitnerBoxes: [1], numQuestions: 2 }, { generate });
     expect(out[0].questionTranslation).toBe('The book lies on the table.');
     expect(out[1].questionTranslation).toBeNull();
+  });
+});
+
+const { generateDrills } = require('../src/services/troubleDrills');
+
+describe('quiz material', () => {
+  const { app } = makeApp();
+  const api = client(app);
+  let langId;
+  let setId;
+  let wordId;
+
+  beforeAll(async () => {
+    langId = (await api.post('/api/languages').send({ name: 'Dutch', code: 'nl-NL' })).body.id;
+    setId = (await api.post('/api/sets').send({ name: 'Basics', languageId: langId })).body.id;
+    const created = await api.post('/api/words').send({
+      languageId: langId, wordSetId: setId,
+      word: 'liggen', wordTranslated: 'to lie', partOfSpeech: 'verb',
+      definition: 'to lie, to be placed', definitionTranslated: 'liggen',
+      example1: 'Het boek ligt op de tafel.', example1Translated: 'The book is on the table.',
+    });
+    wordId = created.body.id;
+  });
+
+  test('returns the un-blanked sentence alongside the cloze', async () => {
+    const db = app.locals.db;
+    const out = await generateDrills(db, { languageId: langId, setId, wordIds: [wordId] }, {
+      generate: async () => ([{
+        wordId,
+        cloze: {
+          sentence: 'Het boek ____ op de tafel.',
+          answer: 'ligt',
+          distractors: ['legt', 'lag', 'liggen'],
+          sentenceTranslation: 'The book is lying on the table.',
+        },
+        hook: 'liGGen lies by itself.',
+        confusables: ['leggen'],
+      }]),
+    });
+    expect(out).toHaveLength(1);
+    expect(out[0].sentence).toBe('Het boek ligt op de tafel.');
+    expect(out[0].cloze.sentence).toContain('____');
+  });
+
+  test('the local fallback also carries a sentence', async () => {
+    const db = app.locals.db;
+    const out = await generateDrills(db, { languageId: langId, setId, wordIds: [wordId] }, {
+      generate: async () => { throw new Error('gemini down'); },
+    });
+    expect(out[0].sentence).toBe('Het boek ligt op de tafel.');
+  });
+
+  test('limit caps how many words are processed', async () => {
+    const db = app.locals.db;
+    const out = await generateDrills(
+      db,
+      { languageId: langId, setId, wordIds: [wordId], limit: 20 },
+      { generate: async () => { throw new Error('down'); } });
+    expect(out).toHaveLength(1);
+  });
+
+  test('POST /api/quiz/material rejects an empty wordIds list', async () => {
+    const res = await api.post('/api/quiz/material').send({ languageId: langId, wordIds: [] });
+    expect(res.status).toBe(400);
+  });
+
+  test('the drill prompt constrains sentence length', () => {
+    const { drillPrompt } = require('../src/services/troubleDrills');
+    const prompt = drillPrompt({ name: 'Dutch', code: 'nl-NL' }, [
+      { id: 1, word: 'liggen', partOfSpeech: 'verb', definition: 'to lie' },
+    ], 'A1');
+    expect(prompt).toMatch(/between 4 and 8 words/i);
   });
 });
