@@ -653,6 +653,12 @@ describe('quiz lapses', () => {
     expect(res.status).toBe(200);
     expect(res.body.updated).toBe(0);
   });
+
+  test('a malformed body (non-array wordIds) is a no-op, not a 500', async () => {
+    const res = await api.post('/api/quiz/lapses').send({ wordIds: 12345 });
+    expect(res.status).toBe(200);
+    expect(res.body.updated).toBe(0);
+  });
 });
 
 describe('article questions carry a word id', () => {

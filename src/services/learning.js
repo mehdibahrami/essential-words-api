@@ -123,7 +123,8 @@ function resetProgress(db, { languageId, setId } = {}) {
  * it happened to ask about, and a word deleted mid-session must not fail the flush.
  */
 function openLapses(db, wordIds = [], now = new Date()) {
-  const ids = [...new Set((wordIds || []).map(Number).filter(Number.isFinite))];
+  if (!Array.isArray(wordIds)) return { updated: 0 };
+  const ids = [...new Set(wordIds.map(Number).filter(Number.isFinite))];
   if (!ids.length) return { updated: 0 };
 
   const stmt = db.prepare(`
