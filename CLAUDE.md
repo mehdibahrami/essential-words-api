@@ -24,6 +24,13 @@ Full design in [`docs/DESIGN.md`](docs/DESIGN.md).
 - **Nouns are stored** in the nullable `words.grammar` TEXT column (gender/plural are lexical). Populated by `scripts/populate-dutch-nouns-db.js` from `scripts/data/dutch-nouns.json` (244 nouns, each plural verified against en.wiktionary; run direct-to-SQLite on the Pi — the HTTP path hits the rate limiter). `irregularPlural` is computed (not stored).
 - Column added by an idempotent migration in `src/db/index.js` (`ALTER TABLE words ADD COLUMN grammar`).
 
+## AI sentence material (`word_material`)
+- **Generated material is cached, keyed `(wordId, level)`** (`word_material`, `src/db/index.js`). `generateDrills` (`src/services/troubleDrills.js`) reads the cache, calls Gemini **only for the misses**, and writes results back inside one `db.transaction`. This is the fix for a measured **34.4 s** cold call for 20 words, which blew the client's then-hard 30 s timeout and silently deleted Fill-the-gap, Build-it and typed gaps from every session with no error shown. Measured after deploy: cold **33.8 s**, warm **0.13 s**, byte-identical payloads.
+- **A null result is cached too.** A word that resolves to no usable cloze is written as a row anyway — re-asking Gemini for it on every session is exactly the latency the cache exists to remove. Don't "optimise" that away by skipping empty writes.
+- **`drillPrompt` takes `knownWords(db, languageId)`** so generated sentences reuse vocabulary the learner has actually learned (`leitnerBox >= 1`), bounded by `MIN_KNOWN_WORDS`/`MAX_KNOWN_WORDS`. Note the consequence: because rows are keyed only `(wordId, level)`, a word generated during a language's *first* session keeps that sentence forever, even as the learner's vocabulary grows. Benign in direction (early sentences are simpler), but the constraint effectively applies once per word.
+- **Cache invalidation is an allow-list, not a blanket drop.** `MATERIAL_FIELDS` in `src/services/words.js` drops cached rows only when a field the prompt actually consumes changes. A Leitner/review update must **never** discard expensive AI material — that was the whole point of the allow-list.
+- Tests: `tests/material.test.js`. Gemini is always injected as `deps.generate`; **never** let a test call the real API.
+
 ## Gotchas
 - **Leitner logic is ported verbatim from the app's `DatabaseManager.swift`** (`src/utils/leitner.js`, `time.js`). If the app's boxes/intervals change, update both.
 - Dates are **ISO-8601 UTC strings**; "start of day" for scheduling uses `APP_TIMEZONE` (default `Europe/Amsterdam`), not UTC.
