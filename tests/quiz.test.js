@@ -148,10 +148,25 @@ describe('quiz material', () => {
   });
 
   test('the local fallback also carries a sentence', async () => {
-    const db = app.locals.db;
-    const out = await generateDrills(db, { languageId: langId, setId, wordIds: [wordId] }, {
-      generate: async () => { throw new Error('gemini down'); },
+    // Its own db and word: `wordId` above was already cached by the previous test
+    // under the same default level ('A1'), so reusing it here would serve straight
+    // from `word_material` and never touch the throwing `generate` this test exists
+    // to exercise.
+    const db = openDatabase(':memory:');
+    const lang = languages.createLanguage(db, { name: 'Dutch', code: 'nl-NL' });
+    const set = sets.createSet(db, { name: 'Basics', languageId: lang.id });
+    const w = words.createWord(db, {
+      word: 'liggen', wordTranslated: 'to lie', partOfSpeech: 'verb',
+      definition: 'to lie, to be placed', definitionTranslated: 'liggen',
+      languageId: lang.id, wordSetId: set.id,
+      example1: 'Het boek ligt op de tafel.', example1Translated: 'The book is on the table.',
     });
+
+    let calls = 0;
+    const out = await generateDrills(db, { languageId: lang.id, setId: set.id, wordIds: [w.id] }, {
+      generate: async () => { calls += 1; throw new Error('gemini down'); },
+    });
+    expect(calls).toBe(1); // proves the local fallback path was actually exercised
     expect(out[0].sentence).toBe('Het boek ligt op de tafel.');
   });
 
