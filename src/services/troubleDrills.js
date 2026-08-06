@@ -126,16 +126,56 @@ function validCloze(cloze) {
   return !re.test(withoutBlank);
 }
 
-function drillPrompt(language, rows, level = 'A1') {
+/** How many known headwords the prompt will carry, at most. Bounds prompt size. */
+const MAX_KNOWN_WORDS = 80;
+/** Below this, the list is too thin to constrain by and would force unnatural sentences. */
+const MIN_KNOWN_WORDS = 10;
+
+/**
+ * Headwords the learner has actually learned, best-known first.
+ *
+ * `leitnerBox >= 1` is the definition of "learned" everywhere else in the app: a new
+ * word sits at box 0 and only enters box 1 once it has been marked learned.
+ */
+function knownWords(db, languageId, limit = MAX_KNOWN_WORDS) {
+  return db
+    .prepare(
+      `SELECT word FROM words
+       WHERE deletedAt IS NULL AND languageId = @languageId AND leitnerBox >= 1
+       ORDER BY leitnerBox DESC, lastReviewedDate DESC
+       LIMIT @limit`
+    )
+    .all({ languageId: Number(languageId), limit })
+    .map((r) => bareWord(r.word))
+    .filter(Boolean);
+}
+
+function drillPrompt(language, rows, level = 'A1', known = []) {
   const list = rows
     .map((r) => `- id ${r.id}: "${r.word}" (${r.partOfSpeech || 'unknown'}) = ${r.definition || r.wordTranslated}`)
     .join('\n');
+
+  // A SOFT constraint. A sentence needing a function word outside the list is still
+  // better than no sentence, so nothing downstream validates or rejects on this basis —
+  // `validCloze` is unchanged.
+  const knownBlock = known.length >= MIN_KNOWN_WORDS
+    ? [
+        '',
+        `The student already knows these ${language.name} words:`,
+        known.join(', '),
+        `Build each sentence from those words plus the word being practised. Prefer the`,
+        `shortest natural sentence that uses it. If a sentence genuinely needs a word that`,
+        `is not listed, use it — a natural sentence matters more than a perfect match.`,
+      ].join('\n')
+    : '';
+
   return [
     `The student keeps forgetting these ${language.name} (${language.code}) words:`,
     list,
     '',
     `Write every sentence at CEFR level ${level} — vocabulary and grammar the student can read at that level.`,
     `Every sentence must be between 4 and 8 words long. Longer sentences cannot be used as word-bank exercises.`,
+    knownBlock,
     '',
     `For EACH word return one object with:`,
     `- "wordId": the numeric id given above.`,
@@ -260,7 +300,7 @@ async function generateDrills(db, body, deps = {}) {
   const aiById = new Map();
   try {
     const generate = deps.generate || generateQuizFromPrompt;
-    const raw = await generate(drillPrompt(language, missing, level));
+    const raw = await generate(drillPrompt(language, missing, level, knownWords(db, languageId)));
     for (const entry of Array.isArray(raw) ? raw : []) {
       if (entry && entry.wordId != null) aiById.set(Number(entry.wordId), entry);
     }
@@ -311,6 +351,6 @@ async function generateDrills(db, body, deps = {}) {
 
 module.exports = {
   generateDrills, drillPrompt, clozeFromExamples, validCloze, unblank,
-  readCachedMaterial, writeCachedMaterial,
+  readCachedMaterial, writeCachedMaterial, knownWords,
   MAX_DRILL_WORDS, MAX_MATERIAL_WORDS,
 };
