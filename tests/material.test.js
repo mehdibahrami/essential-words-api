@@ -165,3 +165,33 @@ describe('known-vocabulary constraint', () => {
     expect(drills.knownWords(db, lang.id)).not.toContain('onbekend');
   });
 });
+
+describe('cache invalidation', () => {
+  test('editing a word drops its cached material', async () => {
+    const { db, lang, w } = seed();
+    await drills.generateDrills(db, { languageId: lang.id, wordIds: [w.id], level: 'A1' },
+      { generate: async () => aiFor(w.id) });
+    expect(db.prepare('SELECT COUNT(*) c FROM word_material WHERE wordId = ?').get(w.id).c).toBe(1);
+
+    words.updateWord(db, w.id, { word: 'vergeten' });
+    expect(db.prepare('SELECT COUNT(*) c FROM word_material WHERE wordId = ?').get(w.id).c).toBe(0);
+  });
+
+  test('a review-only update does not drop cached material', async () => {
+    const { db, lang, w } = seed();
+    await drills.generateDrills(db, { languageId: lang.id, wordIds: [w.id], level: 'A1' },
+      { generate: async () => aiFor(w.id) });
+
+    words.updateWord(db, w.id, { leitnerBox: 3 });
+    expect(db.prepare('SELECT COUNT(*) c FROM word_material WHERE wordId = ?').get(w.id).c).toBe(1);
+  });
+
+  test('deleting a word drops its cached material', async () => {
+    const { db, lang, w } = seed();
+    await drills.generateDrills(db, { languageId: lang.id, wordIds: [w.id], level: 'A1' },
+      { generate: async () => aiFor(w.id) });
+
+    words.deleteWord(db, w.id);
+    expect(db.prepare('SELECT COUNT(*) c FROM word_material WHERE wordId = ?').get(w.id).c).toBe(0);
+  });
+});

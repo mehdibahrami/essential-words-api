@@ -8,6 +8,21 @@ const WORD_FIELDS = [
   'example3', 'example3Translated',
 ];
 
+/**
+ * Fields whose text the generated material is built from. A change to any of these
+ * invalidates every cached sentence for the word; a Leitner or review-date update does
+ * not, which is why this is a field allow-list rather than "any update".
+ */
+const MATERIAL_FIELDS = [
+  'word', 'wordTranslated', 'partOfSpeech', 'definition', 'definitionTranslated',
+  'example1', 'example1Translated', 'example2', 'example2Translated',
+  'example3', 'example3Translated',
+];
+
+function dropCachedMaterial(db, wordId) {
+  db.prepare('DELETE FROM word_material WHERE wordId = ?').run(Number(wordId));
+}
+
 // Cache of languageId -> code, per DB instance (a WeakMap so test DBs don't collide
 // and are GC'd). Language codes are stable, so no invalidation is needed.
 const langCodeByDb = new WeakMap();
@@ -123,6 +138,10 @@ function updateWord(db, id, fields) {
   const assignable = [...WORD_FIELDS, 'grammar', 'leitnerBox', 'isLearned', 'nextPracticeDate', 'wordSetId', 'updatedAt'];
   db.prepare(`UPDATE words SET ${assignable.map((c) => `${c}=@${c}`).join(', ')} WHERE id=@id`)
     .run({ ...next, id });
+
+  if (MATERIAL_FIELDS.some((f) => Object.prototype.hasOwnProperty.call(fields, f))) {
+    dropCachedMaterial(db, id);
+  }
   return getWord(db, id);
 }
 
@@ -130,6 +149,7 @@ function deleteWord(db, id) {
   const existing = getWordRow(db, id);
   if (!existing || existing.deletedAt) throw notFound('Word not found');
   db.prepare('UPDATE words SET deletedAt=@now, updatedAt=@now WHERE id=@id').run({ id, now: nowIso() });
+  dropCachedMaterial(db, id);
 }
 
 const NOT_NULL_TEXT = new Set(['word', 'wordTranslated', 'partOfSpeech', 'definition', 'definitionTranslated']);
