@@ -557,9 +557,8 @@ describe('trouble word drills', () => {
   });
 
   test('an AI sentence translation passes through, a non-string one is nulled', async () => {
-    const { db, languageId, ids } = seed();
-    const packFor = (translation) => async () => ([{
-      wordId: ids.liggen,
+    const packFor = (id, translation) => async () => ([{
+      wordId: id,
       cloze: {
         sentence: 'Het boek ____ op de tafel.',
         answer: 'ligt',
@@ -569,11 +568,18 @@ describe('trouble word drills', () => {
       hook: 'kept',
     }]);
 
-    const good = await troubleDrills.generateDrills(db, { languageId, wordIds: [ids.liggen] }, { generate: packFor('  The book lies on the table. ') });
-    expect(good[0].cloze.sentenceTranslation).toBe('The book lies on the table.');
+    // Each case gets its own db: generateDrills now caches per (wordId, level), so
+    // reusing one db across these calls would serve the first ("good") result back
+    // for every later case instead of exercising the generator again.
+    {
+      const { db, languageId, ids } = seed();
+      const good = await troubleDrills.generateDrills(db, { languageId, wordIds: [ids.liggen] }, { generate: packFor(ids.liggen, '  The book lies on the table. ') });
+      expect(good[0].cloze.sentenceTranslation).toBe('The book lies on the table.');
+    }
 
     for (const bad of [42, null, '   ']) {
-      const out = await troubleDrills.generateDrills(db, { languageId, wordIds: [ids.liggen] }, { generate: packFor(bad) });
+      const { db, languageId, ids } = seed();
+      const out = await troubleDrills.generateDrills(db, { languageId, wordIds: [ids.liggen] }, { generate: packFor(ids.liggen, bad) });
       expect(out[0].cloze.sentenceTranslation).toBeNull();
       expect(out[0].hook).toBe('kept'); // the cloze itself is still valid
     }

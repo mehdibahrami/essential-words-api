@@ -48,6 +48,20 @@ CREATE TABLE IF NOT EXISTS words (
   deletedAt TEXT
 );
 
+CREATE TABLE IF NOT EXISTS word_material (
+  wordId              INTEGER NOT NULL,
+  level               TEXT    NOT NULL,
+  sentence            TEXT,
+  clozeSentence       TEXT,
+  clozeAnswer         TEXT,
+  clozeDistractors    TEXT,
+  sentenceTranslation TEXT,
+  hook                TEXT,
+  confusables         TEXT,
+  createdAt           TEXT    NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (wordId, level)
+);
+
 CREATE INDEX IF NOT EXISTS idx_sets_language ON word_sets(languageId);
 CREATE INDEX IF NOT EXISTS idx_words_set ON words(wordSetId);
 CREATE INDEX IF NOT EXISTS idx_words_language ON words(languageId);

@@ -158,6 +158,69 @@ function unblank(cloze) {
   return cloze.sentence.split(BLANK).join(cloze.answer);
 }
 
+/** Rows already generated for these (wordId, level) pairs, in drill shape. */
+function readCachedMaterial(db, ids, level) {
+  const out = new Map();
+  if (!ids.length) return out;
+  const rows = db
+    .prepare(
+      `SELECT * FROM word_material
+       WHERE level = ? AND wordId IN (${ids.map(() => '?').join(',')})`
+    )
+    .all(level, ...ids);
+  for (const r of rows) {
+    out.set(r.wordId, {
+      wordId: r.wordId,
+      sentence: r.sentence,
+      cloze: r.clozeSentence
+        ? {
+            sentence: r.clozeSentence,
+            answer: r.clozeAnswer,
+            distractors: JSON.parse(r.clozeDistractors || '[]'),
+            sentenceTranslation: r.sentenceTranslation,
+          }
+        : null,
+      hook: r.hook,
+      confusables: JSON.parse(r.confusables || '[]'),
+    });
+  }
+  return out;
+}
+
+/**
+ * Persist one drill. Written for EVERY resolved word, including the local
+ * `clozeFromExamples` fallback and including words that resolved to no cloze at all —
+ * a null result is a real answer worth remembering, and re-asking Gemini for it on
+ * every session is exactly the latency this cache exists to remove.
+ */
+function writeCachedMaterial(db, level, drill) {
+  db.prepare(
+    `INSERT INTO word_material
+       (wordId, level, sentence, clozeSentence, clozeAnswer, clozeDistractors,
+        sentenceTranslation, hook, confusables)
+     VALUES (@wordId, @level, @sentence, @clozeSentence, @clozeAnswer, @clozeDistractors,
+             @sentenceTranslation, @hook, @confusables)
+     ON CONFLICT(wordId, level) DO UPDATE SET
+       sentence = excluded.sentence,
+       clozeSentence = excluded.clozeSentence,
+       clozeAnswer = excluded.clozeAnswer,
+       clozeDistractors = excluded.clozeDistractors,
+       sentenceTranslation = excluded.sentenceTranslation,
+       hook = excluded.hook,
+       confusables = excluded.confusables`
+  ).run({
+    wordId: drill.wordId,
+    level,
+    sentence: drill.sentence ?? null,
+    clozeSentence: drill.cloze ? drill.cloze.sentence : null,
+    clozeAnswer: drill.cloze ? drill.cloze.answer : null,
+    clozeDistractors: drill.cloze ? JSON.stringify(drill.cloze.distractors || []) : null,
+    sentenceTranslation: drill.cloze ? drill.cloze.sentenceTranslation ?? null : null,
+    hook: drill.hook ?? null,
+    confusables: JSON.stringify(drill.confusables || []),
+  });
+}
+
 /**
  * Build a drill pack for the given word ids. One batched AI call; every word falls
  * back to a cloze cut from its own example sentences if the model fails or returns
@@ -184,20 +247,28 @@ async function generateDrills(db, body, deps = {}) {
     .all(ids);
   if (!rows.length) throw badRequest('none of the given wordIds exist');
 
+  const cached = readCachedMaterial(db, ids, level);
+  const missing = rows.filter((r) => !cached.has(r.id));
+
+  // Nothing to generate: serve the cache and skip Gemini entirely.
+  if (!missing.length) {
+    return rows.map((r) => cached.get(r.id));
+  }
+
   const pool = decoyPool(db, languageId, setId);
 
   const aiById = new Map();
   try {
     const generate = deps.generate || generateQuizFromPrompt;
-    const raw = await generate(drillPrompt(language, rows, level));
+    const raw = await generate(drillPrompt(language, missing, level));
     for (const entry of Array.isArray(raw) ? raw : []) {
       if (entry && entry.wordId != null) aiById.set(Number(entry.wordId), entry);
     }
   } catch (_) {
-    // Leave aiById empty: every word takes the local fallback below.
+    // Leave aiById empty: every missing word takes the local fallback below.
   }
 
-  return rows.map((row) => {
+  const built = missing.map((row) => {
     const ai = aiById.get(row.id);
     if (ai && validCloze(ai.cloze)) {
       const cloze = {
@@ -219,16 +290,27 @@ async function generateDrills(db, body, deps = {}) {
     const usable = local && validCloze(local) ? local : null;
     return {
       wordId: row.id,
-      // A word-bank/sentence-scramble exercise needs no distractors, only the
-      // intact sentence — so `sentence` comes from `local` directly rather than
-      // `usable`. `cloze` (the multiple-choice exercise) still requires 2+
-      // distractors, so it can legitimately be null while `sentence` is not.
+      // A word-bank exercise needs no distractors, only the intact sentence — so
+      // `sentence` comes from `local` directly rather than `usable`. `cloze` still
+      // requires 2+ distractors, so it can legitimately be null while `sentence` is not.
       sentence: local ? unblank(local) : null,
       cloze: usable,
       hook: null,
       confusables: [],
     };
   });
+
+  const write = db.transaction((list) => {
+    for (const d of list) writeCachedMaterial(db, level, d);
+  });
+  write(built);
+
+  const byId = new Map(built.map((d) => [d.wordId, d]));
+  return rows.map((r) => cached.get(r.id) || byId.get(r.id));
 }
 
-module.exports = { generateDrills, drillPrompt, clozeFromExamples, validCloze, unblank, MAX_DRILL_WORDS, MAX_MATERIAL_WORDS };
+module.exports = {
+  generateDrills, drillPrompt, clozeFromExamples, validCloze, unblank,
+  readCachedMaterial, writeCachedMaterial,
+  MAX_DRILL_WORDS, MAX_MATERIAL_WORDS,
+};
