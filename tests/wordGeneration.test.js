@@ -17,6 +17,18 @@ function seedDutch() {
   return { db, lang, set };
 }
 
+test('prompt asks for Persian translations and an English definition, regardless of target language', () => {
+  const dutch = { name: 'Dutch', code: 'nl-NL' };
+  const french = { name: 'French', code: 'fr-FR' };
+  for (const lang of [dutch, french]) {
+    const prompt = buildPrompt(lang, 'huis');
+    expect(prompt).toMatch(/wordTranslated.*Persian/i);
+    expect(prompt).toMatch(/definitionTranslated.*Persian/i);
+    expect(prompt).toMatch(/"definition".*ENGLISH/);
+    expect(prompt).toMatch(/A2/);
+  }
+});
+
 test('prompt asks for noun grammar only for Dutch', () => {
   const dutch = { name: 'Dutch', code: 'nl-NL' };
   const french = { name: 'French', code: 'fr-FR' };

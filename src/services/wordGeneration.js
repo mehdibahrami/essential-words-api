@@ -20,18 +20,20 @@ function buildPrompt(language, word) {
     ? '\n- If "partOfSpeech" is "noun", also include a "grammar" object: {"article": "de" or "het", "plural": "<plural form, without the article>"}. Omit "grammar" entirely for any other part of speech.'
     : '';
 
-  return `You are populating a vocabulary flashcard for a language-learning app. The target language is ${language.name} (code: ${language.code}). The student entered the word or phrase: "${word}".
+  return `You are populating a vocabulary flashcard for a language-learning app used by a native Persian (Farsi) speaker learning ${language.name} (code: ${language.code}). The student entered the word or phrase: "${word}".
 
 Return a single JSON object (not an array) with exactly these fields:
 - "headword": the canonical dictionary form of the word/phrase in ${language.name}, corrected for spelling and casing.${dutchNote}
 - "partOfSpeech": one of "noun", "verb", "adjective", "adverb", "phrase", "other" — the single best fit.
-- "wordTranslated": a natural, concise English translation of the headword.
-- "definition": a short definition of the headword, written in ${language.name}.
-- "definitionTranslated": that definition translated into English.
-- "example1": a natural example sentence in ${language.name} using the headword.
-- "example1Translated": the English translation of example1.
-- "example2": a second, different example sentence in ${language.name} using the headword.
-- "example2Translated": the English translation of example2.${nounGrammarInstruction}
+- "wordTranslated": a natural, concise Persian (Farsi) translation of the headword, written in Persian script.
+- "definition": a short dictionary-style definition of the headword, written in ENGLISH (e.g. "occupied / busy", "with", "in front of") — a plain English gloss, not a definition in ${language.name}.
+- "definitionTranslated": that English definition translated into Persian (Farsi), written in Persian script.
+- "example1": a natural example sentence in ${language.name} using the headword, written at CEFR A2 level — short, everyday vocabulary and simple grammar a beginner-to-elementary learner already knows.
+- "example1Translated": the Persian (Farsi) translation of example1, written in Persian script.
+- "example2": a second, different A2-level example sentence in ${language.name} using the headword.
+- "example2Translated": the Persian (Farsi) translation of example2, written in Persian script.${nounGrammarInstruction}
+
+"wordTranslated", "definitionTranslated", "example1Translated" and "example2Translated" MUST be in Persian (Farsi) script — never English. "definition" MUST be in English, regardless of ${language.name}. Only "headword", "example1" and "example2" are in ${language.name}. Both examples must be A2-level: simple sentence structure, common everyday words only, no subordinate clauses or advanced tenses.
 
 Respond with ONLY the JSON object — no markdown fences, no surrounding text.`;
 }
