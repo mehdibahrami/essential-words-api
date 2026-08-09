@@ -7,6 +7,7 @@ const learning = require('../services/learning');
 const sync = require('../services/sync');
 const quiz = require('../services/quiz');
 const troubleDrills = require('../services/troubleDrills');
+const wordGeneration = require('../services/wordGeneration');
 
 const router = express.Router();
 const db = (req) => req.app.locals.db;
@@ -41,6 +42,11 @@ router.get('/words/:id', asyncHandler((req, res) => {
 router.post('/words', asyncHandler((req, res) => res.status(201).json(words.createWord(db(req), req.body))));
 router.put('/words/:id', asyncHandler((req, res) => res.json(words.updateWord(db(req), idParam(req), req.body))));
 router.delete('/words/:id', asyncHandler((req, res) => { words.deleteWord(db(req), idParam(req)); res.status(204).end(); }));
+
+// AI word generation: given a single word, ask Gemini to fill in translation, definition,
+// examples and (Dutch nouns only) article/plural, then insert it into the set.
+router.post('/sets/:id/words/ai-generate', asyncHandler(async (req, res) =>
+  res.status(201).json(await wordGeneration.generateWordForSet(db(req), idParam(req), req.body.word))));
 
 // Bulk word ops (CSV import / seeding, bulk delete)
 router.post('/sets/:id/words/bulk', asyncHandler((req, res) => res.status(201).json(words.bulkCreateWords(db(req), idParam(req), req.body.words ?? req.body))));

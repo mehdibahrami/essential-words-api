@@ -4,11 +4,10 @@ const { HttpError } = require('../middleware/errorHandler');
 const BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 /**
- * Call Gemini with `prompt` and decode the returned JSON array of quiz questions.
- * Replicates GeminiAPIService.generateQuiz: responseMimeType=application/json,
- * then slice the text from the first '[' to the last ']' before parsing.
+ * Call Gemini with `prompt` and return the raw text of the first candidate.
+ * Shared by every JSON-shaped caller below; each decides how to slice/parse it.
  */
-async function generateQuizFromPrompt(prompt, { apiKey = config.geminiApiKey, model = config.geminiModel, fetchImpl = fetch } = {}) {
+async function callGemini(prompt, { apiKey = config.geminiApiKey, model = config.geminiModel, fetchImpl = fetch } = {}) {
   if (!apiKey) throw new HttpError(500, 'GEMINI_NOT_CONFIGURED', 'GEMINI_API_KEY is not set');
 
   const url = `${BASE}/${model}:generateContent?key=${apiKey}`;
@@ -48,7 +47,16 @@ async function generateQuizFromPrompt(prompt, { apiKey = config.geminiApiKey, mo
   if (!text) {
     throw new HttpError(502, 'GEMINI_EMPTY', 'Gemini response had no content');
   }
+  return text;
+}
 
+/**
+ * Call Gemini with `prompt` and decode the returned JSON array of quiz questions.
+ * Replicates GeminiAPIService.generateQuiz: responseMimeType=application/json,
+ * then slice the text from the first '[' to the last ']' before parsing.
+ */
+async function generateQuizFromPrompt(prompt, opts = {}) {
+  const text = await callGemini(prompt, opts);
   const start = text.indexOf('[');
   const end = text.lastIndexOf(']');
   const jsonSlice = start !== -1 && end !== -1 ? text.slice(start, end + 1) : text;
@@ -64,4 +72,26 @@ async function generateQuizFromPrompt(prompt, { apiKey = config.geminiApiKey, mo
   return questions;
 }
 
-module.exports = { generateQuizFromPrompt };
+/**
+ * Call Gemini with `prompt` and decode the returned JSON object — used for single-item
+ * generation (e.g. AI word lookup) rather than the array shape `generateQuizFromPrompt`
+ * expects. Slices the text from the first '{' to the last '}' before parsing.
+ */
+async function generateWordDetails(prompt, opts = {}) {
+  const text = await callGemini(prompt, opts);
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  const jsonSlice = start !== -1 && end !== -1 ? text.slice(start, end + 1) : text;
+  let details;
+  try {
+    details = JSON.parse(jsonSlice);
+  } catch {
+    throw new HttpError(502, 'GEMINI_PARSE_FAILED', 'Could not parse word JSON from Gemini');
+  }
+  if (!details || typeof details !== 'object' || Array.isArray(details)) {
+    throw new HttpError(502, 'GEMINI_PARSE_FAILED', 'Gemini did not return a JSON object');
+  }
+  return details;
+}
+
+module.exports = { generateQuizFromPrompt, generateWordDetails };
