@@ -5,3 +5,6 @@ data/*.sqlite-*
 coverage/
 *.log
 .DS_Store
+
+# graphify (auto-rebuilt by git hooks; see CLAUDE.md)
+graphify-out/

@@ -44,3 +44,13 @@ Full design in [`docs/DESIGN.md`](docs/DESIGN.md).
 - **Prefer the Tailscale host `100.107.130.120` for deploys, not the LAN IP.** The LAN address `192.168.2.10` frequently times out on port 22 even from the same network; Tailscale SSH has been reliable. (First Tailscale SSH of a session may print an auth-check URL and then proceed on its own — that is normal, not a failure.) `https://words.jurchi.ir` works from anywhere.
 - **Verify a deploy, don't assume it:** `curl -s https://words.jurchi.ir/health` plus an authed probe of a route you touched — a `400` for a missing required param proves the route is live and validating, which a `404` would not. The API key must match `APIConfig.swift` in the app repo, **not** necessarily the local `.env` (they have drifted).
 - The `.env` is excluded from rsync, so the Pi keeps its own. A `401` after deploying almost always means you tested with the local `.env` key rather than the Pi's.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships. The iOS app repo (`~/Projects/Swift/essential-words`) has its own graph, and `<app repo>/graphify-out/merged-graph.json` is this graph merged with the app's — use it (via `--graph` on `query`/`path`, from the app repo) for any question spanning the client and this API. `explain`/exact-id lookups are unreliable on that merged graph (known graphify bug with cross-repo-prefixed node ids); prefer `query`/`path` there and save `explain` for this repo's own graph.json.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost) — also done automatically by the installed git post-commit/post-checkout hooks. **`merged-graph.json` in the app repo refreshes automatically too**: this repo's post-commit/post-checkout hooks also launch `~/Projects/Swift/essential-words/scripts/refresh-merged-graph.sh` in the background (appended outside graphify's own managed hook block, so `graphify hook install`/`uninstall` never touches it), which re-runs `graphify update .` in both repos and re-merges. Log at `~/.cache/graphify-merge.log`. No manual step needed unless you want to force it early.
