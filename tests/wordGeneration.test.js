@@ -55,18 +55,78 @@ test('generates a Dutch noun and stores article/plural grammar', async () => {
   expect(word.grammar).toEqual({ kind: 'noun', article: 'het', plural: 'huizen', irregularPlural: false });
 });
 
-test('a Dutch verb gets no stored grammar — present tense is derived live on read', async () => {
+test('a regular Dutch verb stores the full AI-provided conjugation (not live-derived)', async () => {
   const { db, set } = seedDutch();
   const generate = async () => ({
-    headword: 'lopen', partOfSpeech: 'verb', wordTranslated: 'to walk',
-    definition: 'zich te voet verplaatsen', definitionTranslated: 'to move on foot',
-    example1: 'Ik loop naar school.', example1Translated: 'I walk to school.',
-    example2: 'Zij lopen in het park.', example2Translated: 'They walk in the park.',
+    headword: 'lopen', partOfSpeech: 'verb', wordTranslated: 'راه رفتن',
+    definition: 'to walk', definitionTranslated: 'راه رفتن، پیاده رفتن',
+    example1: 'Ik loop naar school.', example1Translated: 'من به مدرسه می‌روم.',
+    example2: 'Zij lopen in het park.', example2Translated: 'آن‌ها در پارک راه می‌روند.',
+    grammar: {
+      present: { ik: 'loop', jij: 'loopt', hij: 'loopt', wij: 'lopen' },
+      irregular: false, separable: false,
+      past: { singular: 'liep', plural: 'liepen' }, pastParticiple: 'gelopen',
+    },
   });
 
   const word = await generateWordForSet(db, set.id, 'lopen', { generateWordDetails: generate });
+  expect(word.grammar).toEqual({
+    kind: 'verb',
+    present: { ik: 'loop', jij: 'loopt', hij: 'loopt', wij: 'lopen' },
+    irregular: false, separable: false,
+    past: { singular: 'liep', plural: 'liepen' }, pastParticiple: 'gelopen',
+  });
+});
+
+test('a separable verb not in the hardcoded SEPARABLE_VERBS list still gets the correct split', async () => {
+  const { db, set } = seedDutch();
+  // "afsluiten" is deliberately NOT in dutchGrammar.js's SEPARABLE_VERBS set — this is
+  // exactly the gap AI-provided grammar exists to cover: the live rule-based conjugator
+  // would otherwise treat it as one regular verb and never split off "af".
+  const generate = async () => ({
+    headword: 'afsluiten', partOfSpeech: 'verb (separable)', wordTranslated: 'قفل کردن، بستن',
+    definition: 'to lock / close off', definitionTranslated: 'قفل کردن، بستن',
+    example1: 'Ik sluit de deur af.', example1Translated: 'من در را قفل می‌کنم.',
+    example2: 'Zij sluiten de weg af.', example2Translated: 'آن‌ها جاده را می‌بندند.',
+    grammar: {
+      present: { ik: 'sluit af', jij: 'sluit af', hij: 'sluit af', wij: 'sluiten af' },
+      irregular: false, separable: true,
+      past: { singular: 'sloot af', plural: 'sloten af' }, pastParticiple: 'afgesloten',
+    },
+  });
+
+  const word = await generateWordForSet(db, set.id, 'afsluiten', { generateWordDetails: generate });
+  expect(word.grammar.separable).toBe(true);
+  expect(word.grammar.present.ik).toBe('sluit af');
+  expect(word.partOfSpeech).toBe('verb (separable)');
+});
+
+test('a verb with no usable AI grammar falls back to null (live derivation takes over on read)', async () => {
+  const { db, set } = seedDutch();
+  const generate = async () => ({
+    headword: 'lopen', partOfSpeech: 'verb', wordTranslated: 'راه رفتن',
+    definition: 'to walk', definitionTranslated: 'راه رفتن',
+    example1: 'Ik loop.', example1Translated: 'من راه می‌روم.',
+    // no grammar object at all
+  });
+
+  const word = await generateWordForSet(db, set.id, 'lopen', { generateWordDetails: generate });
+  // words.buildGrammar's live path still kicks in for a Dutch "verb" with no stored grammar.
   expect(word.grammar.kind).toBe('verb');
   expect(word.grammar.present.ik).toBe('loop');
+});
+
+test('a Dutch noun missing its article prefix gets auto-corrected from the grammar article', async () => {
+  const { db, set } = seedDutch();
+  const generate = async () => ({
+    headword: 'tafel', partOfSpeech: 'noun', wordTranslated: 'میز', // forgot the "de " prefix
+    definition: 'table', definitionTranslated: 'میز',
+    example1: 'De tafel is groot.', example1Translated: 'میز بزرگ است.',
+    grammar: { article: 'de', plural: 'tafels' },
+  });
+
+  const word = await generateWordForSet(db, set.id, 'tafel', { generateWordDetails: generate });
+  expect(word.word).toBe('de tafel');
 });
 
 test('rejects a duplicate headword without inserting anything', async () => {

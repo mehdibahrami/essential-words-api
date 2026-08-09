@@ -3,55 +3,130 @@ const { HttpError } = require('../middleware/errorHandler');
 const { generateWordDetails } = require('./gemini');
 const words = require('./words');
 
-const VALID_POS = new Set(['noun', 'verb', 'adjective', 'adverb', 'phrase', 'other']);
-
 /**
- * Build the AI prompt for a single word. Dutch verb *present*-tense grammar is never
- * requested here — `words.buildGrammar` already derives it live and reliably from the
- * infinitive (see dutchGrammar.js) — but article/plural for nouns is lexical and can
- * only come from the model (or a human), so that's the one grammar fact we ask for.
+ * Build the AI prompt for a single word.
+ *
+ * `partOfSpeech` is intentionally free text, not a fixed enum — the real DB has ~45
+ * distinct labels (preposition, pronoun, conjunction, determiner, numeral, interjection,
+ * combined forms like "adjective/adverb", and critically "verb (separable)"), and both
+ * `words.buildGrammar` (`pos.startsWith('verb ')`) and the quiz prompt builders
+ * (`partOfSpeech.includes('verb')`) already tolerate that variety by substring match
+ * rather than requiring an exact "verb". Constraining the model to a 6-value enum would
+ * have silently collapsed "verb (separable)" down to "verb", throwing away exactly the
+ * fact that matters most for a separable verb.
  */
 function buildPrompt(language, word) {
   const isDutch = language.code === 'nl-NL';
-  const dutchNote = isDutch
-    ? ' For Dutch: if the word is a noun, prefix the headword with its article, "de" or "het" (e.g. "de tafel", "het huis"); if it is a verb, use the plain infinitive with no article (e.g. "lopen").'
-    : '';
-  const nounGrammarInstruction = isDutch
-    ? '\n- If "partOfSpeech" is "noun", also include a "grammar" object: {"article": "de" or "het", "plural": "<plural form, without the article>"}. Omit "grammar" entirely for any other part of speech.'
-    : '';
+  const dutchGrammarBlock = isDutch ? `
 
-  return `You are populating a vocabulary flashcard for a language-learning app used by a native Persian (Farsi) speaker learning ${language.name} (code: ${language.code}). The student entered the word or phrase: "${word}".
+DUTCH-SPECIFIC GRAMMAR RULES:
+- "partOfSpeech" should use this app's existing Dutch grammar labels: "noun", "verb", "verb (separable)", "verb (auxiliary)", "verb (modal)", "adjective", "adverb", "preposition", "pronoun", "conjunction", "determiner", "numeral", "interjection", etc. Use "verb (separable)" specifically when the verb's prefix detaches in the present tense (e.g. "opstaan" → "ik sta op", "meenemen" → "ik neem mee").
+- Noun: "headword" MUST start with its article, "de " or "het " — exactly like every Dutch noun already in this app's database (e.g. "de hand", "het leven", "de tafel", "het huis"), never a bare noun with no article. Also include a "grammar" object: {"article": "de" or "het", "plural": "<plural form, WITHOUT the article>"}.
+- Verb (any "partOfSpeech" starting with "verb"): "headword" is the bare infinitive, no article. Also include a "grammar" object with the FULL conjugation: {"present": {"ik": "...", "jij": "...", "hij": "...", "wij": "..."}, "irregular": true or false, "separable": true or false, "past": {"singular": "...", "plural": "..."}, "pastParticiple": "..."}. For a separable verb, every present-tense form must put the detached prefix at the END (e.g. "ik sta op", NEVER "ik opsta"; "wij nemen mee", NEVER "wij meenemen").` : '';
+
+  return `You are populating a vocabulary flashcard for a language-learning app used by a native Persian (Farsi) speaker learning ${language.name} (code: ${language.code}). The student entered: "${word}".
+
+LANGUAGE RULES — apply to every field below:
+- "headword", "example1" and "example2" are written in ${language.name}.
+- "definition" is written in ENGLISH, ALWAYS — regardless of ${language.name}. It is a short dictionary-style gloss (e.g. "occupied / busy", "with", "in front of"), not a definition written in ${language.name}.
+- "wordTranslated", "definitionTranslated", "example1Translated" and "example2Translated" are written in PERSIAN (Farsi) script, ALWAYS — never English.
+- "example1" and "example2" must be CEFR A2 level: short sentences, common everyday vocabulary, simple grammar — no subordinate clauses or advanced tenses.
+
+HEADWORD NORMALIZATION: "headword" is always the base DICTIONARY form — corrected for spelling/casing, and NEVER the inflected form the student typed if they typed one:
+- a conjugated verb → its infinitive (student enters "ben" → headword "zijn")
+- a plural noun → its singular (student enters "huizen" → headword "het huis")
+- an inflected adjective → its base predicate form (student enters Dutch "lange" → headword "lang")
 
 Return a single JSON object (not an array) with exactly these fields:
-- "headword": the canonical dictionary form of the word/phrase in ${language.name}, corrected for spelling and casing.${dutchNote}
-- "partOfSpeech": one of "noun", "verb", "adjective", "adverb", "phrase", "other" — the single best fit.
-- "wordTranslated": a natural, concise Persian (Farsi) translation of the headword, written in Persian script.
-- "definition": a short dictionary-style definition of the headword, written in ENGLISH (e.g. "occupied / busy", "with", "in front of") — a plain English gloss, not a definition in ${language.name}.
-- "definitionTranslated": that English definition translated into Persian (Farsi), written in Persian script.
-- "example1": a natural example sentence in ${language.name} using the headword, written at CEFR A2 level — short, everyday vocabulary and simple grammar a beginner-to-elementary learner already knows.
-- "example1Translated": the Persian (Farsi) translation of example1, written in Persian script.
-- "example2": a second, different A2-level example sentence in ${language.name} using the headword.
-- "example2Translated": the Persian (Farsi) translation of example2, written in Persian script.${nounGrammarInstruction}
-
-"wordTranslated", "definitionTranslated", "example1Translated" and "example2Translated" MUST be in Persian (Farsi) script — never English. "definition" MUST be in English, regardless of ${language.name}. Only "headword", "example1" and "example2" are in ${language.name}. Both examples must be A2-level: simple sentence structure, common everyday words only, no subordinate clauses or advanced tenses.
+- "headword": string, per the normalization rule above.
+- "partOfSpeech": the single most accurate grammatical label for the headword.
+- "wordTranslated": string.
+- "definition": string.
+- "definitionTranslated": string.
+- "example1": string.
+- "example1Translated": string.
+- "example2": string.
+- "example2Translated": string.${dutchGrammarBlock}
 
 Respond with ONLY the JSON object — no markdown fences, no surrounding text.`;
 }
 
+/** Free text, but guarded against the model returning a sentence or empty junk. */
 function normalizePartOfSpeech(value) {
   const v = String(value || '').trim().toLowerCase();
-  return VALID_POS.has(v) ? v : 'other';
+  if (!v || v.length > 40 || !/^[a-z][a-z /().]*$/.test(v)) return 'other';
+  return v;
 }
 
-/** Only Dutch nouns carry a stored grammar fact (article/plural) — everything else
- * either has none (non-Dutch) or is derived live on read (Dutch verbs). */
-function extractGrammar(language, partOfSpeech, aiGrammar) {
-  if (language.code !== 'nl-NL' || partOfSpeech !== 'noun') return null;
+function isNounPos(pos) { return pos.includes('noun'); }
+function isVerbPos(pos) { return pos === 'verb' || pos.startsWith('verb '); }
+
+/**
+ * Article + plural for a Dutch noun — lexical facts only the model (or a human) can
+ * supply. `null` if the model didn't give a usable article/plural; the word is still
+ * created, just without a grammar row (matches how a hand-entered noun with no grammar
+ * behaves today).
+ */
+function extractNounGrammar(aiGrammar) {
   if (!aiGrammar || typeof aiGrammar !== 'object') return null;
   const article = aiGrammar.article === 'het' ? 'het' : aiGrammar.article === 'de' ? 'de' : null;
   const plural = typeof aiGrammar.plural === 'string' ? aiGrammar.plural.trim() : '';
   if (!article || !plural) return null;
   return { article, plural };
+}
+
+/**
+ * Full verb conjugation, sanitized to the exact `WordGrammar.VerbGrammar` shape the
+ * client decodes. Every DB verb sampled — including ones the live rule-based conjugator
+ * (`dutchGrammar.js`) *could* handle — already stores a complete grammar object rather
+ * than relying on live derivation, so AI generation follows that same convention rather
+ * than leaving verbs to the live path (which cannot know a NEW separable verb isn't in
+ * its hardcoded `SEPARABLE_VERBS` list, and would conjugate it as a single non-separable
+ * word). `null` if the model's present-tense forms aren't usable — the word is still
+ * created; `words.buildGrammar` then falls back to live derivation on read, so a
+ * malformed AI response degrades to today's behavior rather than losing grammar entirely.
+ */
+function extractVerbGrammar(aiGrammar) {
+  if (!aiGrammar || typeof aiGrammar !== 'object') return null;
+  const present = aiGrammar.present;
+  const forms = ['ik', 'jij', 'hij', 'wij'];
+  if (!present || typeof present !== 'object' || !forms.every((k) => typeof present[k] === 'string' && present[k].trim())) {
+    return null;
+  }
+  const grammar = {
+    kind: 'verb',
+    present: Object.fromEntries(forms.map((k) => [k, present[k].trim()])),
+    irregular: !!aiGrammar.irregular,
+    separable: !!aiGrammar.separable,
+  };
+  const past = aiGrammar.past;
+  if (past && typeof past === 'object' && typeof past.singular === 'string' && past.singular.trim() &&
+      typeof past.plural === 'string' && past.plural.trim()) {
+    grammar.past = { singular: past.singular.trim(), plural: past.plural.trim() };
+  }
+  if (typeof aiGrammar.pastParticiple === 'string' && aiGrammar.pastParticiple.trim()) {
+    grammar.pastParticiple = aiGrammar.pastParticiple.trim();
+  }
+  return grammar;
+}
+
+function extractGrammar(language, partOfSpeech, aiGrammar) {
+  if (language.code !== 'nl-NL') return null;
+  if (isNounPos(partOfSpeech)) return extractNounGrammar(aiGrammar);
+  if (isVerbPos(partOfSpeech)) return extractVerbGrammar(aiGrammar);
+  return null;
+}
+
+/**
+ * Belt-and-suspenders: if the model classified the word as a Dutch noun and gave a
+ * usable article but forgot to prefix "headword" with it (the one formatting rule most
+ * likely to slip), fix the headword up rather than inserting a noun that looks unlike
+ * every other one in the database.
+ */
+function ensureNounArticle(headword, partOfSpeech, grammar) {
+  if (!grammar || !grammar.article || !isNounPos(partOfSpeech)) return headword;
+  const alreadyPrefixed = /^(de|het)\s+/i.test(headword);
+  return alreadyPrefixed ? headword : `${grammar.article} ${headword}`;
 }
 
 /**
@@ -77,14 +152,16 @@ async function generateWordForSet(db, wordSetId, rawWord, deps = {}) {
     throw new HttpError(502, 'GEMINI_INCOMPLETE', 'AI response was missing required fields');
   }
 
-  const headword = typeof details.headword === 'string' && details.headword.trim() ? details.headword.trim() : word;
+  const partOfSpeech = normalizePartOfSpeech(details.partOfSpeech);
+  const grammar = extractGrammar(language, partOfSpeech, details.grammar);
+
+  const rawHeadword = typeof details.headword === 'string' && details.headword.trim() ? details.headword.trim() : word;
+  const headword = ensureNounArticle(rawHeadword, partOfSpeech, grammar);
+
   const existing = db
     .prepare('SELECT id FROM words WHERE wordSetId = ? AND deletedAt IS NULL AND lower(word) = lower(?)')
     .get(wordSetId, headword);
   if (existing) throw conflict(`"${headword}" is already in this set`);
-
-  const partOfSpeech = normalizePartOfSpeech(details.partOfSpeech);
-  const grammar = extractGrammar(language, partOfSpeech, details.grammar);
 
   return words.createWord(db, {
     word: headword,
@@ -102,4 +179,7 @@ async function generateWordForSet(db, wordSetId, rawWord, deps = {}) {
   });
 }
 
-module.exports = { generateWordForSet, buildPrompt, normalizePartOfSpeech, extractGrammar };
+module.exports = {
+  generateWordForSet, buildPrompt, normalizePartOfSpeech, extractGrammar,
+  extractNounGrammar, extractVerbGrammar, ensureNounArticle,
+};
