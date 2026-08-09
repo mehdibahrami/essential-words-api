@@ -22,7 +22,7 @@ function buildPrompt(language, word) {
 DUTCH-SPECIFIC GRAMMAR RULES:
 - "partOfSpeech" should use this app's existing Dutch grammar labels: "noun", "verb", "verb (separable)", "verb (auxiliary)", "verb (modal)", "adjective", "adverb", "preposition", "pronoun", "conjunction", "determiner", "numeral", "interjection", etc. Use "verb (separable)" specifically when the verb's prefix detaches in the present tense (e.g. "opstaan" → "ik sta op", "meenemen" → "ik neem mee").
 - Noun: "headword" MUST start with its article, "de " or "het " — exactly like every Dutch noun already in this app's database (e.g. "de hand", "het leven", "de tafel", "het huis"), never a bare noun with no article. Also include a "grammar" object: {"article": "de" or "het", "plural": "<plural form, WITHOUT the article>"}.
-- Verb (any "partOfSpeech" starting with "verb"): "headword" is the bare infinitive, no article. Also include a "grammar" object with the FULL conjugation: {"present": {"ik": "...", "jij": "...", "hij": "...", "wij": "..."}, "irregular": true or false, "separable": true or false, "past": {"singular": "...", "plural": "..."}, "pastParticiple": "..."}. For a separable verb, every present-tense form must put the detached prefix at the END (e.g. "ik sta op", NEVER "ik opsta"; "wij nemen mee", NEVER "wij meenemen").` : '';
+- Verb (any "partOfSpeech" starting with "verb"): "headword" is the bare infinitive, no article. Also include a "grammar" object with the FULL conjugation, shaped exactly like this real example for the separable verb "opstaan": {"present": {"ik": "sta op", "jij": "staat op", "hij": "staat op", "wij": "staan op"}, "irregular": true, "separable": true, "past": {"singular": "stond op", "plural": "stonden op"}, "pastParticiple": "opgestaan"}. CRITICAL: each present-tense VALUE is ONLY the conjugated verb (plus its detached prefix for a separable verb) — it must NEVER repeat the subject pronoun that is already its own JSON key (wrong: "ik": "ik sta op"; correct: "ik": "sta op"). For a separable verb, the detached prefix goes at the END of the value (wrong: "opstaat"; correct: "staat op").` : '';
 
   return `You are populating a vocabulary flashcard for a language-learning app used by a native Persian (Farsi) speaker learning ${language.name} (code: ${language.code}). The student entered: "${word}".
 
@@ -86,6 +86,18 @@ function extractNounGrammar(aiGrammar) {
  * created; `words.buildGrammar` then falls back to live derivation on read, so a
  * malformed AI response degrades to today's behavior rather than losing grammar entirely.
  */
+/**
+ * Defensive strip for the exact failure mode seen live (Gemini, "afsluiten"): a
+ * present-tense value came back as "ik sluit af" for the "ik" key — the pronoun
+ * duplicated into the value it's already the key for. The prompt now gives a literal,
+ * unambiguous JSON example, but this guards the stored data even if a future response
+ * slips anyway, since a leading "ik "/"jij "/etc. would otherwise render doubled next to
+ * `GrammarSectionView`'s own pronoun label.
+ */
+function stripLeadingPronoun(pronoun, value) {
+  return value.replace(new RegExp(`^${pronoun}\\s+`, 'i'), '').trim();
+}
+
 function extractVerbGrammar(aiGrammar) {
   if (!aiGrammar || typeof aiGrammar !== 'object') return null;
   const present = aiGrammar.present;
@@ -93,9 +105,11 @@ function extractVerbGrammar(aiGrammar) {
   if (!present || typeof present !== 'object' || !forms.every((k) => typeof present[k] === 'string' && present[k].trim())) {
     return null;
   }
+  const stripped = Object.fromEntries(forms.map((k) => [k, stripLeadingPronoun(k, present[k].trim())]));
+  if (!forms.every((k) => stripped[k])) return null; // e.g. a value that was ONLY the pronoun
   const grammar = {
     kind: 'verb',
-    present: Object.fromEntries(forms.map((k) => [k, present[k].trim()])),
+    present: stripped,
     irregular: !!aiGrammar.irregular,
     separable: !!aiGrammar.separable,
   };

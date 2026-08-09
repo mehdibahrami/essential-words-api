@@ -101,6 +101,26 @@ test('a separable verb not in the hardcoded SEPARABLE_VERBS list still gets the 
   expect(word.partOfSpeech).toBe('verb (separable)');
 });
 
+test('strips a pronoun the model redundantly duplicated into its own present-tense value (live Gemini bug, "afsluiten")', async () => {
+  const { db, set } = seedDutch();
+  const generate = async () => ({
+    headword: 'afsluiten', partOfSpeech: 'verb (separable)', wordTranslated: 'بستن',
+    definition: 'to close', definitionTranslated: 'بستن',
+    example1: 'Ik sluit de deur af.', example1Translated: 'من در را می‌بندم.',
+    example2: 'Zij sluiten de weg af.', example2Translated: 'آن‌ها جاده را می‌بندند.',
+    // Real response observed from Gemini: every present-tense value wrongly repeats the
+    // subject pronoun that is already its own JSON key.
+    grammar: {
+      present: { ik: 'ik sluit af', jij: 'jij sluit af', hij: 'hij sluit af', wij: 'wij sluiten af' },
+      irregular: false, separable: true,
+      past: { singular: 'sloot af', plural: 'sloten af' }, pastParticiple: 'afgesloten',
+    },
+  });
+
+  const word = await generateWordForSet(db, set.id, 'afsluiten', { generateWordDetails: generate });
+  expect(word.grammar.present).toEqual({ ik: 'sluit af', jij: 'sluit af', hij: 'sluit af', wij: 'sluiten af' });
+});
+
 test('a verb with no usable AI grammar falls back to null (live derivation takes over on read)', async () => {
   const { db, set } = seedDutch();
   const generate = async () => ({
