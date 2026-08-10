@@ -55,7 +55,8 @@ const STEM_OVERRIDES = {
   herinneren: 'herinner', rekenen: 'reken', tekenen: 'teken', wandelen: 'wandel',
   ademen: 'adem', verbeteren: 'verbeter', aarzelen: 'aarzel', bewonderen: 'bewonder',
   fluisteren: 'fluister', herhalen: 'herhaal', regenen: 'regen', bedoelen: 'bedoel',
-  antwoorden: 'antwoord', beloven: 'beloof',
+  antwoorden: 'antwoord', beloven: 'beloof', regelen: 'regel', ondertekenen: 'onderteken',
+  nodigen: 'nodig',
 };
 
 /**
@@ -79,7 +80,8 @@ const SEPARABLE_VERBS = new Set([
   'tegenkomen', 'verdergaan', 'afrekenen', 'afmaken', 'afstuderen', 'doorgeven', 'langskomen',
   'meebrengen', 'meedoen', 'meegeven', 'meekomen', 'meekijken', 'neerleggen', 'neerzetten',
   'omgaan', 'opschrijven', 'meelopen', 'opbellen', 'uitzoeken', 'aanraden', 'meenemen',
-  'opslaan',
+  'opslaan', 'invullen', 'aanvragen', 'afzeggen', 'aanmelden', 'afmelden', 'terugbrengen',
+  'uitnodigen', 'doorsturen', 'overstappen', 'overmaken', 'inchecken', 'uitchecken',
 ]);
 
 /**
