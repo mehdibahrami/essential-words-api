@@ -11,13 +11,13 @@ const WORD_FIELDS = [
 /**
  * Fields whose text the generated material is built from. A change to any of these
  * invalidates every cached sentence for the word; a Leitner or review-date update does
- * not, which is why this is a field allow-list rather than "any update".
+ * not, which is why this is a field allow-list rather than "any update". Currently an
+ * alias for WORD_FIELDS (every word field the client can edit happens to also be
+ * material-relevant) — kept as a separate name because the two lists answer different
+ * questions and are free to diverge if a future WORD_FIELDS addition (e.g. a
+ * non-textual flag) shouldn't invalidate cached material.
  */
-const MATERIAL_FIELDS = [
-  'word', 'wordTranslated', 'partOfSpeech', 'definition', 'definitionTranslated',
-  'example1', 'example1Translated', 'example2', 'example2Translated',
-  'example3', 'example3Translated',
-];
+const MATERIAL_FIELDS = WORD_FIELDS;
 
 function dropCachedMaterial(db, wordId) {
   db.prepare('DELETE FROM word_material WHERE wordId = ?').run(Number(wordId));
