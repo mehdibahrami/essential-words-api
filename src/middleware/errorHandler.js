@@ -15,7 +15,6 @@ const conflict = (msg) => new HttpError(409, 'CONFLICT', msg);
 // Wrap async route handlers so thrown/rejected errors reach the error middleware.
 const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
-// eslint-disable-next-line no-unused-vars
 function errorHandler(err, _req, res, _next) {
   if (err instanceof HttpError) {
     return res.status(err.status).json({ error: err.code, message: err.message });
