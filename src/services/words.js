@@ -39,6 +39,19 @@ function languageCode(db, languageId) {
   return code;
 }
 
+// buildVerbGrammar is pure (word + language code -> grammar), and serializeWord runs
+// it on every list call for every Dutch verb row (§3.6) -- memoize so repeated reads
+// of the same word only conjugate once. Unbounded is fine at this app's scale
+// (single-user, a few thousand words at most).
+const verbGrammarCache = new Map();
+function memoizedBuildVerbGrammar(word, code) {
+  const key = `${code}::${word}`;
+  if (verbGrammarCache.has(key)) return verbGrammarCache.get(key);
+  const grammar = dutchGrammar.buildVerbGrammar(word);
+  verbGrammarCache.set(key, grammar);
+  return grammar;
+}
+
 /**
  * Build the grammar DTO for a word. Stored grammar (nouns; manual verb overrides)
  * always wins; otherwise Dutch verbs are conjugated live from the infinitive.
@@ -47,14 +60,15 @@ function buildGrammar(row, db) {
   let stored = null;
   if (row.grammar) { try { stored = JSON.parse(row.grammar); } catch (_) { stored = null; } }
   const pos = (row.partOfSpeech || '').toLowerCase();
-  const isDutch = languageCode(db, row.languageId) === 'nl-NL';
+  const code = languageCode(db, row.languageId);
+  const isDutch = code === 'nl-NL';
 
   if (stored) {
     if (stored.kind === 'verb' && stored.present) return stored;
     if (stored.article && stored.plural) return dutchGrammar.buildNounGrammar(row.word, stored);
   }
   if (isDutch && (pos === 'verb' || pos.startsWith('verb '))) {
-    return dutchGrammar.buildVerbGrammar(row.word);
+    return memoizedBuildVerbGrammar(row.word, code);
   }
   return null;
 }
