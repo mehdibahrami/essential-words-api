@@ -121,23 +121,28 @@ function createWord(db, body) {
   return getWord(db, info.lastInsertRowid);
 }
 
-/** Update editable/content fields (not the Leitner state — that goes through /practice). */
+/**
+ * Update editable/content fields. Leitner state (leitnerBox/isLearned/nextPracticeDate)
+ * has exactly one authority — the /review and /practice endpoints — and is deliberately
+ * NOT accepted here, even if a caller passes it directly: this used to be a documented
+ * "allow explicit correction" escape hatch with no client ever exercising it, which is
+ * exactly the kind of latent hole that stops being latent the moment an edit UI is
+ * wired onto this route (see CLAUDE.md H2).
+ */
 function updateWord(db, id, fields) {
   const existing = getWordRow(db, id);
   if (!existing || existing.deletedAt) throw notFound('Word not found');
   const next = { ...existing };
   for (const f of WORD_FIELDS) if (fields[f] !== undefined) next[f] = fields[f];
-  // Allow explicit correction of learning state if provided.
-  if (fields.leitnerBox !== undefined) next.leitnerBox = Number(fields.leitnerBox);
-  if (fields.isLearned !== undefined) next.isLearned = fields.isLearned ? 1 : 0;
-  if (fields.nextPracticeDate !== undefined) next.nextPracticeDate = fields.nextPracticeDate;
   if (fields.wordSetId !== undefined) next.wordSetId = Number(fields.wordSetId);
   if (fields.grammar !== undefined) next.grammar = serializeGrammarField(fields.grammar);
   next.updatedAt = nowIso();
 
-  const assignable = [...WORD_FIELDS, 'grammar', 'leitnerBox', 'isLearned', 'nextPracticeDate', 'wordSetId', 'updatedAt'];
+  const assignable = [...WORD_FIELDS, 'grammar', 'wordSetId', 'updatedAt'];
+  const patch = { id };
+  for (const f of assignable) patch[f] = next[f];
   db.prepare(`UPDATE words SET ${assignable.map((c) => `${c}=@${c}`).join(', ')} WHERE id=@id`)
-    .run({ ...next, id });
+    .run(patch);
 
   if (MATERIAL_FIELDS.some((f) => Object.prototype.hasOwnProperty.call(fields, f))) {
     dropCachedMaterial(db, id);

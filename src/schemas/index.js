@@ -70,17 +70,17 @@ const wordCreateSchema = z
   })
   .strict();
 
-// PUT /words/:id — content fields, plus the same Leitner-state fields updateWord()
-// currently honors (leitnerBox/isLearned/nextPracticeDate — see H2 in CLAUDE.md).
-// Narrowed to drop those three in task 2.2, which removes the escape hatch itself;
-// this schema only adds the general validation/whitelist mechanism for now.
+// PUT /words/:id — content fields only. leitnerBox/isLearned/nextPracticeDate are
+// deliberately NOT accepted: Leitner state has one authority, the /review and
+// /practice endpoints, never a direct field edit (see updateWord() in words.js, H2
+// in CLAUDE.md). A request carrying any of them is rejected by `.strict()` below
+// rather than silently ignored, so the hole is closed at the boundary, not just
+// inside the service. wordSetId stays editable — moving a word between sets is a
+// content correction, not a scheduling one.
 const wordUpdateSchema = z
   .object({
     word: optionalString,
     wordSetId: idLike.optional(),
-    leitnerBox: idLike.optional(),
-    isLearned: z.union([z.boolean(), z.number()]).optional(),
-    nextPracticeDate: optionalNullableString,
     ...wordContentShape,
   })
   .strict();
