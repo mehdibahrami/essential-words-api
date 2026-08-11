@@ -1,5 +1,6 @@
 const config = require('../config');
 const { HttpError } = require('../middleware/errorHandler');
+const logger = require('../logger');
 
 const BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
@@ -72,6 +73,7 @@ async function callGemini(prompt, {
   };
 
   await acquireSlot();
+  const startedAt = Date.now();
   try {
     const res = await fetchWithRetry(fetchImpl, url, {
       method: 'POST',
@@ -99,7 +101,14 @@ async function callGemini(prompt, {
     if (!text) {
       throw new HttpError(502, 'GEMINI_EMPTY', 'Gemini response had no content');
     }
+    logger.info({ model, ms: Date.now() - startedAt, outcome: 'ok' }, 'gemini call finished');
     return text;
+  } catch (err) {
+    logger.warn(
+      { model, ms: Date.now() - startedAt, outcome: 'error', code: err.code },
+      'gemini call finished'
+    );
+    throw err;
   } finally {
     releaseSlot();
   }

@@ -125,6 +125,34 @@ describe('gemini: request hardening (2.4)', () => {
     expect(calls).toBe(1);
   });
 
+  test('logs duration and outcome for a successful call', async () => {
+    const logger = require('../src/logger');
+    const infoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
+    try {
+      await generateQuizFromPrompt('prompt', okOpts(fetchReturning(okBody)));
+      expect(infoSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ outcome: 'ok', model: 'gemini-test' }),
+        'gemini call finished'
+      );
+    } finally {
+      infoSpy.mockRestore();
+    }
+  });
+
+  test('logs duration and outcome for a failed call', async () => {
+    const logger = require('../src/logger');
+    const warnSpy = jest.spyOn(logger, 'warn').mockImplementation(() => {});
+    try {
+      await expect(generateQuizFromPrompt('prompt', okOpts(fetchReturning('not json')))).rejects.toThrow();
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ outcome: 'error', code: 'GEMINI_BAD_RESPONSE' }),
+        'gemini call finished'
+      );
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
   test('caps concurrent calls, queuing a burst beyond the limit', async () => {
     let concurrent = 0;
     let maxConcurrent = 0;
