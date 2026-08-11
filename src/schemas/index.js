@@ -87,11 +87,15 @@ const wordUpdateSchema = z
 
 // POST /sets/:id/words/bulk — CSV import/seeding. Deliberately permissive per-item
 // (an item with no/blank `word` is silently skipped by bulkCreateWords, not rejected —
-// see tests/api.test.js "bulk word ops"). Array-length cap added in task 2.3.
+// see tests/api.test.js "bulk word ops"). The array itself is capped: this route sits
+// under the 10mb body limit meant for CSV seeding (Resources/English.csv, ~500 rows),
+// not an unbounded insert -- BULK_WORDS_MAX leaves a generous margin above any real
+// seed file while still bounding worst-case work done per request.
+const BULK_WORDS_MAX = 2000;
 const bulkWordItemSchema = z.record(z.string(), z.any());
 const bulkCreateWordsSchema = z.union([
-  z.array(bulkWordItemSchema),
-  z.object({ words: z.array(bulkWordItemSchema) }).strict(),
+  z.array(bulkWordItemSchema).max(BULK_WORDS_MAX),
+  z.object({ words: z.array(bulkWordItemSchema).max(BULK_WORDS_MAX) }).strict(),
 ]);
 
 const aiGenerateWordSchema = z
@@ -148,4 +152,5 @@ module.exports = {
   drillRequestSchema,
   quizGenerateSchema,
   quizLapsesSchema,
+  BULK_WORDS_MAX,
 };

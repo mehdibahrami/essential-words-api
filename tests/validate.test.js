@@ -88,4 +88,13 @@ describe('request validation (zod)', () => {
     expect(res.status).toBe(201);
     expect(res.body).toEqual({ inserted: 2 });
   });
+
+  test('bulkCreateWords rejects an array over BULK_WORDS_MAX before touching the DB', async () => {
+    const { BULK_WORDS_MAX } = require('../src/schemas');
+    const freshSetId = (await api.post('/api/sets').send({ name: 'Bulk cap', languageId: langId })).body.id;
+    const words = Array.from({ length: BULK_WORDS_MAX + 1 }, (_, i) => ({ word: `w${i}` }));
+    const res = await api.post(`/api/sets/${freshSetId}/words/bulk`).send({ words });
+    expect(res.status).toBe(400);
+    expect((await api.get(`/api/words?setId=${freshSetId}`)).body).toHaveLength(0);
+  });
 });
