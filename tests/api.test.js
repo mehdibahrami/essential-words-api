@@ -232,33 +232,6 @@ describe('bulk word ops', () => {
   });
 });
 
-describe('sync', () => {
-  const { app } = makeApp();
-  const api = client(app);
-
-  test('import preserves ids and snapshot returns them', async () => {
-    const imp = await api.post('/api/sync/import').send({
-      languages: [{ id: 5, name: 'German', code: 'de-DE' }],
-      sets: [{ id: 9, name: 'Imported', languageId: 5 }],
-      words: [{ id: 20, word: 'Haus', wordTranslated: 'house', languageId: 5, wordSetId: 9, isLearned: true, leitnerBox: 3 }],
-    });
-    expect(imp.status).toBe(200);
-    expect(imp.body).toEqual({ languages: 1, sets: 1, words: 1 });
-
-    const snap = await api.get('/api/sync');
-    expect(snap.body.languages[0].id).toBe(5);
-    expect(snap.body.words[0]).toMatchObject({ id: 20, isLearned: true, leitnerBox: 3 });
-  });
-
-  test('delta since returns only newer rows', async () => {
-    const t = new Date().toISOString();
-    await new Promise((r) => setTimeout(r, 5));
-    await api.post('/api/languages').send({ name: 'French', code: 'fr-FR' });
-    const delta = await api.get(`/api/sync?since=${encodeURIComponent(t)}`);
-    expect(delta.body.languages.every((l) => l.code === 'fr-FR')).toBe(true);
-  });
-});
-
 describe('quiz', () => {
   const { app } = makeApp();
   const api = client(app);

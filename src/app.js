@@ -10,7 +10,7 @@ function createApp(db) {
   app.locals.db = db;
 
   app.set('trust proxy', 1); // trust Cloudflare / reverse-proxy X-Forwarded-For
-  app.use(express.json({ limit: '10mb' })); // /sync/import can be large
+  app.use(express.json({ limit: '10mb' })); // /sets/:id/words/bulk carries the full CSV seed (Resources/English.csv is 357KB on disk)
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 

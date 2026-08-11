@@ -4,7 +4,6 @@ const languages = require('../services/languages');
 const sets = require('../services/sets');
 const words = require('../services/words');
 const learning = require('../services/learning');
-const sync = require('../services/sync');
 const quiz = require('../services/quiz');
 const troubleDrills = require('../services/troubleDrills');
 const wordGeneration = require('../services/wordGeneration');
@@ -77,9 +76,5 @@ router.post('/quiz/lapses', asyncHandler((req, res) =>
   res.json(learning.openLapses(db(req), req.body.wordIds))));
 router.post('/quiz/material', asyncHandler(async (req, res) =>
   res.json(await troubleDrills.generateDrills(db(req), { ...req.body, limit: req.body.limit ?? troubleDrills.MAX_MATERIAL_WORDS }))));
-
-// ---- Sync ----
-router.get('/sync', asyncHandler((req, res) => res.json(sync.snapshot(db(req), req.query.since))));
-router.post('/sync/import', asyncHandler((req, res) => res.json(sync.importData(db(req), req.body))));
 
 module.exports = router;
