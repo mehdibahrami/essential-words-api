@@ -69,6 +69,18 @@ CREATE TABLE IF NOT EXISTS word_material (
   PRIMARY KEY (wordId, level)
 );
 
+-- No numbered migration for this table: db.exec(SCHEMA) runs on every openDatabase, so
+-- IF NOT EXISTS reaches existing databases too. Migrations 001/002 exist because they
+-- altered and rebuilt tables, which IF NOT EXISTS cannot express.
+CREATE TABLE IF NOT EXISTS recall_attempts (
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  wordId    INTEGER NOT NULL REFERENCES words(id) ON DELETE CASCADE,
+  correct   INTEGER NOT NULL,
+  createdAt TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_recall_word_time ON recall_attempts(wordId, createdAt DESC);
+
 CREATE INDEX IF NOT EXISTS idx_sets_language ON word_sets(languageId);
 CREATE INDEX IF NOT EXISTS idx_words_set ON words(wordSetId);
 CREATE INDEX IF NOT EXISTS idx_words_language ON words(languageId);

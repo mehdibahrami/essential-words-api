@@ -140,6 +140,15 @@ const quizLapsesSchema = z
   })
   .strict();
 
+// POST /recall/:wordId/answer — the only Recall body. Strict on purpose: a stray
+// `leitnerBox` in the body must be rejected at the boundary, not silently ignored,
+// because the entire point of this mode is that it cannot move a word's box.
+const recallAnswerSchema = z
+  .object({
+    correct: z.boolean(),
+  })
+  .strict();
+
 module.exports = {
   languageCreateSchema,
   languageUpdateSchema,
@@ -152,5 +161,6 @@ module.exports = {
   drillRequestSchema,
   quizGenerateSchema,
   quizLapsesSchema,
+  recallAnswerSchema,
   BULK_WORDS_MAX,
 };

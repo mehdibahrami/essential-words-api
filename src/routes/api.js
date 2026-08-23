@@ -9,6 +9,7 @@ const learning = require('../services/learning');
 const quiz = require('../services/quiz');
 const troubleDrills = require('../services/troubleDrills');
 const wordGeneration = require('../services/wordGeneration');
+const recall = require('../services/recall');
 
 const router = express.Router();
 const db = (req) => req.app.locals.db;
@@ -78,5 +79,10 @@ router.post('/quiz/lapses', validate({ body: schemas.quizLapsesSchema }), asyncH
   res.json(learning.openLapses(db(req), req.body.wordIds))));
 router.post('/quiz/material', validate({ body: schemas.drillRequestSchema }), asyncHandler(async (req, res) =>
   res.json(await troubleDrills.generateDrills(db(req), { ...req.body, limit: req.body.limit ?? troubleDrills.MAX_MATERIAL_WORDS }))));
+
+// ---- Recall (own-language -> target-language self-test) ----
+// Deliberately no Leitner surface: this block reads and writes `recall_attempts` only.
+router.post('/recall/:wordId/answer', validate({ body: schemas.recallAnswerSchema }), asyncHandler((req, res) =>
+  res.status(201).json(recall.record(db(req), idParam(req), req.body.correct))));
 
 module.exports = router;
