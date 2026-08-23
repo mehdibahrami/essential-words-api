@@ -1,5 +1,4 @@
 const { badRequest, notFound } = require('../middleware/errorHandler');
-// eslint-disable-next-line no-unused-vars -- wired up by Task 3's wrongFilterClause
 const { startOfDayAfterDays } = require('../utils/time');
 const { serializeWord, getWordRow } = require('./words');
 
@@ -73,9 +72,39 @@ function poolClauses(params, { languageId, setId, boxes, wrong } = {}) {
   return clauses;
 }
 
-/** Task 3 fills this in; for now every filter but the unknown-value check is a no-op. */
-function wrongFilterClause(filter, params) { // eslint-disable-line no-unused-vars
-  return null;
+/**
+ * The SQL for one recency filter, or null for "no restriction".
+ *
+ * Every clause correlates on `words.id`, so it is only valid inside a
+ * `SELECT ... FROM words` — which is what both callers use.
+ *
+ * `lastTime` deliberately excludes a word with no attempts at all: it was not
+ * "answered wrongly last time", it was not answered. The window filters are
+ * start-of-day aligned in APP_TIMEZONE (`startOfDayAfterDays`), not hour-precise, so
+ * "this past week" cannot quietly mean something different depending on what time of
+ * day the app was opened.
+ */
+function wrongFilterClause(filter, params) {
+  switch (filter) {
+    case 'all':
+      return null;
+    case 'lastTime':
+      return `(SELECT a.correct FROM recall_attempts a
+                WHERE a.wordId = words.id
+                ORDER BY a.createdAt DESC, a.id DESC
+                LIMIT 1) = 0`;
+    case 'ever':
+      return `EXISTS (SELECT 1 FROM recall_attempts a
+                       WHERE a.wordId = words.id AND a.correct = 0)`;
+    case 'week':
+    case 'month':
+      params.since = startOfDayAfterDays(filter === 'week' ? -7 : -30);
+      return `EXISTS (SELECT 1 FROM recall_attempts a
+                       WHERE a.wordId = words.id AND a.correct = 0
+                         AND a.createdAt >= @since)`;
+    default:
+      return null;
+  }
 }
 
 /** A shuffled page of the filtered pool. */

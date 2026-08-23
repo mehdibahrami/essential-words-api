@@ -145,3 +145,91 @@ describe('recall: pool and box filter', () => {
     expect(res.body[0]).toHaveProperty('grammar');
   });
 });
+
+describe('recall: wrong-answer recency filters', () => {
+  const { app, db } = makeApp();
+  const api = client(app);
+  let setId;
+  let ids;
+
+  /** Insert an attempt directly, dated `daysAgo` days back. */
+  function attempt(wordId, correct, daysAgo = 0) {
+    const at = new Date(Date.now() - daysAgo * 24 * 3600 * 1000).toISOString();
+    db.prepare(
+      'INSERT INTO recall_attempts (wordId, correct, createdAt) VALUES (?, ?, ?)'
+    ).run(wordId, correct ? 1 : 0, at);
+  }
+
+  beforeAll(async () => {
+    ({ setId, ids } = await seed(api, [
+      { word: 'aap' },    // 0: wrong 2 days ago, then right yesterday
+      { word: 'boot' },   // 1: right 3 days ago, then wrong yesterday
+      { word: 'citroen' },// 2: wrong 20 days ago only
+      { word: 'deur' },   // 3: wrong 200 days ago only
+      { word: 'eend' },   // 4: never answered
+    ]));
+    ids.forEach((id) => makeLearned(db, id, 1));
+    attempt(ids[0], false, 2);
+    attempt(ids[0], true, 1);
+    attempt(ids[1], true, 3);
+    attempt(ids[1], false, 1);
+    attempt(ids[2], false, 20);
+    attempt(ids[3], false, 200);
+  });
+
+  const wordsIn = async (wrong) => {
+    const res = await api.get(`/api/recall/queue?setId=${setId}&wrong=${wrong}`);
+    expect(res.status).toBe(200);
+    return res.body.map((w) => w.word).sort();
+  };
+
+  test('all -> every word in the pool', async () => {
+    expect(await wordsIn('all')).toEqual(['aap', 'boot', 'citroen', 'deur', 'eend']);
+  });
+
+  test('no wrong param behaves like all', async () => {
+    const res = await api.get(`/api/recall/queue?setId=${setId}`);
+    expect(res.body).toHaveLength(5);
+  });
+
+  test('lastTime -> only words whose most recent answer was wrong', async () => {
+    // citroen/deur each have exactly one attempt, and it was wrong — that IS their most
+    // recent answer, so they belong here too, same as a word with a longer history.
+    expect(await wordsIn('lastTime')).toEqual(['boot', 'citroen', 'deur']);
+  });
+
+  test('week -> any wrong answer in the past 7 days', async () => {
+    expect(await wordsIn('week')).toEqual(['aap', 'boot']);
+  });
+
+  test('month -> any wrong answer in the past 30 days', async () => {
+    expect(await wordsIn('month')).toEqual(['aap', 'boot', 'citroen']);
+  });
+
+  test('ever -> any wrong answer at all', async () => {
+    expect(await wordsIn('ever')).toEqual(['aap', 'boot', 'citroen', 'deur']);
+  });
+
+  test('a never-answered word is excluded by every filter but all', async () => {
+    for (const f of ['lastTime', 'week', 'month', 'ever']) {
+      expect(await wordsIn(f)).not.toContain('eend');
+    }
+  });
+
+  test('the box filter ANDs with the recency filter', async () => {
+    makeLearned(db, ids[1], 4); // boot -> box 4
+    const res = await api.get(`/api/recall/queue?setId=${setId}&wrong=ever&boxes=1`);
+    expect(res.body.map((w) => w.word).sort()).toEqual(['aap', 'citroen', 'deur']);
+    makeLearned(db, ids[1], 1); // restore
+  });
+
+  test('count agrees with queue for a recency filter', async () => {
+    const res = await api.get(`/api/recall/count?setId=${setId}&wrong=month`);
+    expect(res.body.count).toBe(3);
+  });
+
+  test('an unknown wrong value is a 400', async () => {
+    const res = await api.get(`/api/recall/queue?setId=${setId}&wrong=yesterday`);
+    expect(res.status).toBe(400);
+  });
+});
