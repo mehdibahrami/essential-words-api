@@ -142,4 +142,30 @@ function record(db, wordId, correct, now = new Date()) {
   return { wordId, correct: !!correct, createdAt };
 }
 
-module.exports = { queue, count, record, WRONG_FILTERS, MAX_SESSION_WORDS };
+/**
+ * Drop the Recall history for every word in scope. Called by `learning.resetProgress`
+ * so "Reset progress" in Library means what it says — otherwise a user who reset a set
+ * would still be told, by the recency filters, that they got its words wrong last month.
+ *
+ * Scoped over `words`, not over the Recall pool: a word that has since fallen out of
+ * the pool still has history that a reset should clear.
+ */
+function clearForScope(db, { languageId, setId } = {}) {
+  const clauses = [];
+  const params = {};
+  if (languageId != null) {
+    clauses.push('languageId = @languageId');
+    params.languageId = Number(languageId);
+  }
+  if (setId != null) {
+    clauses.push('wordSetId = @setId');
+    params.setId = Number(setId);
+  }
+  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+  const info = db
+    .prepare(`DELETE FROM recall_attempts WHERE wordId IN (SELECT id FROM words ${where})`)
+    .run(params);
+  return { cleared: info.changes };
+}
+
+module.exports = { queue, count, record, clearForScope, WRONG_FILTERS, MAX_SESSION_WORDS };

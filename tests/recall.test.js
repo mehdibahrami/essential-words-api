@@ -352,3 +352,40 @@ describe('recall: wrong-answer recency filters', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('recall: history lifecycle', () => {
+  const { app, db } = makeApp();
+  const api = client(app);
+  const countAttempts = (wordId) =>
+    db.prepare('SELECT COUNT(*) AS n FROM recall_attempts WHERE wordId = ?').get(wordId).n;
+
+  test('deleting a word cascades its attempts away', async () => {
+    const { ids } = await seed(api, [{ word: 'kat' }]);
+    makeLearned(db, ids[0]);
+    await api.post(`/api/recall/${ids[0]}/answer`).send({ correct: false });
+    expect(countAttempts(ids[0])).toBe(1);
+    db.prepare('DELETE FROM words WHERE id = ?').run(ids[0]);
+    expect(countAttempts(ids[0])).toBe(0);
+  });
+
+  test('resetting a set clears that set\'s recall history only', async () => {
+    const lang = await api.post('/api/languages').send({ name: 'French', code: 'fr-FR' });
+    const setA = await api.post('/api/sets').send({ name: 'A', languageId: lang.body.id });
+    const setB = await api.post('/api/sets').send({ name: 'B', languageId: lang.body.id });
+    const mk = async (setId, word) => {
+      const res = await api.post('/api/words').send({
+        word, languageId: lang.body.id, wordSetId: setId, wordTranslated: 'x',
+      });
+      makeLearned(db, res.body.id);
+      await api.post(`/api/recall/${res.body.id}/answer`).send({ correct: false });
+      return res.body.id;
+    };
+    const a = await mk(setA.body.id, 'un');
+    const b = await mk(setB.body.id, 'deux');
+
+    const res = await api.post(`/api/sets/${setA.body.id}/reset`);
+    expect(res.status).toBe(200);
+    expect(countAttempts(a)).toBe(0);
+    expect(countAttempts(b)).toBe(1);
+  });
+});

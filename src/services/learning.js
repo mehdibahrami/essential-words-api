@@ -2,6 +2,7 @@ const leitner = require('../utils/leitner');
 const { nowIso, startOfDay } = require('../utils/time');
 const { notFound } = require('../middleware/errorHandler');
 const { serializeWord, getWordRow } = require('./words');
+const recall = require('./recall');
 
 function scope(clauses, params, { languageId, setId }) {
   if (languageId != null) { clauses.push('languageId = @languageId'); params.languageId = Number(languageId); }
@@ -109,7 +110,12 @@ function resetProgress(db, { languageId, setId } = {}) {
        lapseCount=0, openLapse=0, lastLapsedAt=NULL, updatedAt=@now ${where}`
     )
     .run(params);
-  return { reset: info.changes };
+  // A reset must take the Recall history with it: the recency filters would otherwise
+  // keep reporting mistakes made before the reset. Recall state is separate from
+  // Leitner state everywhere else — this is the one place they are cleared together,
+  // because "reset progress" is a scope-level "start over", not a Leitner operation.
+  const { cleared } = recall.clearForScope(db, { languageId, setId });
+  return { reset: info.changes, recallCleared: cleared };
 }
 
 /**
