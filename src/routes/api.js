@@ -81,7 +81,10 @@ router.post('/quiz/material', validate({ body: schemas.drillRequestSchema }), as
   res.json(await troubleDrills.generateDrills(db(req), { ...req.body, limit: req.body.limit ?? troubleDrills.MAX_MATERIAL_WORDS }))));
 
 // ---- Recall (own-language -> target-language self-test) ----
-// Deliberately no Leitner surface: this block reads and writes `recall_attempts` only.
+// Deliberately no Leitner surface: it may read `words` for the pool, but never writes
+// to it — only `recall_attempts` is ever written here.
+router.get('/recall/queue', asyncHandler((req, res) => res.json(recall.queue(db(req), req.query))));
+router.get('/recall/count', asyncHandler((req, res) => res.json(recall.count(db(req), req.query))));
 router.post('/recall/:wordId/answer', validate({ body: schemas.recallAnswerSchema }), asyncHandler((req, res) =>
   res.status(201).json(recall.record(db(req), idParam(req), req.body.correct))));
 

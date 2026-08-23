@@ -73,3 +73,75 @@ describe('recall: recording an answer', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('recall: pool and box filter', () => {
+  const { app, db } = makeApp();
+  const api = client(app);
+  let languageId;
+  let setId;
+  let ids;
+
+  beforeAll(async () => {
+    ({ languageId, setId, ids } = await seed(api, [
+      { word: 'een' },   // 0: stays box 0 / unlearned
+      { word: 'twee' },  // 1: box 1
+      { word: 'drie' },  // 2: box 3
+      { word: 'vier' },  // 3: box 6
+      { word: 'vijf' },  // 4: box 8 (mastered)
+    ]));
+    makeLearned(db, ids[1], 1);
+    makeLearned(db, ids[2], 3);
+    makeLearned(db, ids[3], 6);
+    makeLearned(db, ids[4], 8);
+  });
+
+  const wordsIn = async (query) => {
+    const res = await api.get(`/api/recall/queue?${query}`);
+    expect(res.status).toBe(200);
+    return res.body.map((w) => w.word).sort();
+  };
+
+  test('unlearned / box-0 words are never in the pool', async () => {
+    expect(await wordsIn(`setId=${setId}`)).toEqual(['drie', 'twee', 'vier', 'vijf']);
+  });
+
+  test('box filter selects exactly those boxes', async () => {
+    expect(await wordsIn(`setId=${setId}&boxes=1,3`)).toEqual(['drie', 'twee']);
+  });
+
+  test('box 6 also matches mastered words above box 6', async () => {
+    expect(await wordsIn(`setId=${setId}&boxes=6`)).toEqual(['vier', 'vijf']);
+  });
+
+  test('an empty boxes param means every box', async () => {
+    expect(await wordsIn(`setId=${setId}&boxes=`)).toEqual(['drie', 'twee', 'vier', 'vijf']);
+  });
+
+  test('junk box values are ignored, not fatal', async () => {
+    expect(await wordsIn(`setId=${setId}&boxes=abc,3`)).toEqual(['drie']);
+  });
+
+  test('scoping by languageId works', async () => {
+    expect(await wordsIn(`languageId=${languageId}`)).toEqual(['drie', 'twee', 'vier', 'vijf']);
+  });
+
+  test('count matches the queue length for the same filters', async () => {
+    const res = await api.get(`/api/recall/count?setId=${setId}&boxes=1,3`);
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(2);
+  });
+
+  test('limit is honoured and capped at MAX_SESSION_WORDS', async () => {
+    const res = await api.get(`/api/recall/queue?setId=${setId}&limit=2`);
+    expect(res.body).toHaveLength(2);
+    const capped = await api.get(`/api/recall/queue?setId=${setId}&limit=99999`);
+    expect(capped.body).toHaveLength(4);
+  });
+
+  test('queue rows are fully serialized words, not raw rows', async () => {
+    const res = await api.get(`/api/recall/queue?setId=${setId}&boxes=1`);
+    expect(res.body[0]).toHaveProperty('wordTranslated');
+    expect(res.body[0]).toHaveProperty('leitnerBox', 1);
+    expect(res.body[0]).toHaveProperty('grammar');
+  });
+});

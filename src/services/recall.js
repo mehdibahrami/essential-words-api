@@ -1,5 +1,7 @@
-const { notFound } = require('../middleware/errorHandler');
-const { getWordRow } = require('./words');
+const { badRequest, notFound } = require('../middleware/errorHandler');
+// eslint-disable-next-line no-unused-vars -- wired up by Task 3's wrongFilterClause
+const { startOfDayAfterDays } = require('../utils/time');
+const { serializeWord, getWordRow } = require('./words');
 
 /**
  * Recall: the reverse of Practice — prompt in the learner's own language, answer in the
@@ -9,6 +11,96 @@ const { getWordRow } = require('./words');
  * matter of discipline. Same rule `learning.openLapses` states for quiz lapses:
  * scheduling has one authority and it is the Practice flow.
  */
+
+/** The five recency filters the app offers. An unknown value is a 400, never a fallback. */
+const WRONG_FILTERS = ['all', 'lastTime', 'week', 'month', 'ever'];
+
+/**
+ * Default AND cap for `/recall/queue`'s limit — the same number on purpose, so the
+ * count the app's filter panel promises and the session it then gets cannot diverge.
+ * (`TroubleWordsSession.maxSessionWords` in the app is 500 for the same reason.)
+ */
+const MAX_SESSION_WORDS = 500;
+
+/** Highest box the app's chip row offers; a selected 6 means "6 or higher". */
+const MAX_BOX = 6;
+
+/** `?boxes=1,3,6` -> [1, 3, 6]. Junk is dropped; empty means "no box restriction". */
+function parseBoxes(raw) {
+  if (raw == null || raw === '') return [];
+  const list = Array.isArray(raw) ? raw : String(raw).split(',');
+  const boxes = list
+    .map((v) => Number(String(v).trim()))
+    .filter((n) => Number.isInteger(n) && n >= 1 && n <= MAX_BOX);
+  return [...new Set(boxes)].sort((a, b) => a - b);
+}
+
+/**
+ * The clauses shared by `queue` and `count`. Built once so the two can never drift —
+ * a count that disagrees with the session it predicts is the specific bug this guards.
+ * Mutates `params` with the bindings the returned clauses reference.
+ */
+function poolClauses(params, { languageId, setId, boxes, wrong } = {}) {
+  const clauses = ['deletedAt IS NULL', 'isLearned = 1', 'leitnerBox >= 1'];
+
+  if (languageId != null && languageId !== '') {
+    clauses.push('languageId = @languageId');
+    params.languageId = Number(languageId);
+  }
+  if (setId != null && setId !== '') {
+    clauses.push('wordSetId = @setId');
+    params.setId = Number(setId);
+  }
+
+  const selected = parseBoxes(boxes);
+  if (selected.length) {
+    const parts = [];
+    const exact = selected.filter((b) => b < MAX_BOX);
+    if (exact.length) parts.push(`leitnerBox IN (${exact.join(', ')})`);
+    // Mastered words sit in boxes 7+ (leitner.intervalDaysForBox's mastered stages).
+    // Folding them into the top chip is what keeps them reachable at all.
+    if (selected.includes(MAX_BOX)) parts.push(`leitnerBox >= ${MAX_BOX}`);
+    clauses.push(`(${parts.join(' OR ')})`);
+  }
+
+  const filter = wrong == null || wrong === '' ? 'all' : String(wrong);
+  if (!WRONG_FILTERS.includes(filter)) {
+    throw badRequest(`Unknown wrong filter: ${filter}`);
+  }
+  const wrongClause = wrongFilterClause(filter, params);
+  if (wrongClause) clauses.push(wrongClause);
+
+  return clauses;
+}
+
+/** Task 3 fills this in; for now every filter but the unknown-value check is a no-op. */
+function wrongFilterClause(filter, params) { // eslint-disable-line no-unused-vars
+  return null;
+}
+
+/** A shuffled page of the filtered pool. */
+function queue(db, { languageId, setId, boxes, wrong, limit } = {}) {
+  const params = {};
+  const clauses = poolClauses(params, { languageId, setId, boxes, wrong });
+  const requested = Number(limit);
+  params.limit = Number.isInteger(requested) && requested > 0
+    ? Math.min(requested, MAX_SESSION_WORDS)
+    : MAX_SESSION_WORDS;
+  return db
+    .prepare(`SELECT * FROM words WHERE ${clauses.join(' AND ')} ORDER BY RANDOM() LIMIT @limit`)
+    .all(params)
+    .map((r) => serializeWord(r, db));
+}
+
+/** How many words the same filters match, for the app's live filter readout. */
+function count(db, { languageId, setId, boxes, wrong } = {}) {
+  const params = {};
+  const clauses = poolClauses(params, { languageId, setId, boxes, wrong });
+  const row = db
+    .prepare(`SELECT COUNT(*) AS n FROM words WHERE ${clauses.join(' AND ')}`)
+    .get(params);
+  return { count: row.n };
+}
 
 /** Append one Recall answer. Never touches the word row. */
 function record(db, wordId, correct, now = new Date()) {
@@ -21,4 +113,4 @@ function record(db, wordId, correct, now = new Date()) {
   return { wordId, correct: !!correct, createdAt };
 }
 
-module.exports = { record };
+module.exports = { queue, count, record, WRONG_FILTERS, MAX_SESSION_WORDS };
