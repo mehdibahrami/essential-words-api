@@ -103,7 +103,10 @@ function wrongFilterClause(filter, params) {
                        WHERE a.wordId = words.id AND a.correct = 0
                          AND a.createdAt >= @since)`;
     default:
-      return null;
+      // Unreachable: `wrong` is validated against WRONG_FILTERS before we get here. Throwing
+      // rather than returning null so that adding a WRONG_FILTERS value without a case here
+      // fails loudly at once, instead of silently widening the pool to every word.
+      throw new Error(`wrongFilterClause: unhandled filter "${filter}"`);
   }
 }
 
@@ -112,6 +115,9 @@ function queue(db, { languageId, setId, boxes, wrong, limit } = {}) {
   const params = {};
   const clauses = poolClauses(params, { languageId, setId, boxes, wrong });
   const requested = Number(limit);
+  // A non-positive `limit` is treated as unspecified, not as an error: asking for zero words is
+  // not a coherent request, and the fallback is the cap itself, so it can never return more than
+  // the count endpoint promised.
   params.limit = Number.isInteger(requested) && requested > 0
     ? Math.min(requested, MAX_SESSION_WORDS)
     : MAX_SESSION_WORDS;
@@ -139,6 +145,10 @@ function record(db, wordId, correct, now = new Date()) {
   db.prepare(
     'INSERT INTO recall_attempts (wordId, correct, createdAt) VALUES (@wordId, @correct, @createdAt)'
   ).run({ wordId, correct: correct ? 1 : 0, createdAt });
+  // Coerced on purpose, not redundantly: the route's zod schema guarantees a boolean, but
+  // `record()` is exported and a future internal caller (seeder, migration, batch import) has
+  // no schema in front of it. Keeps the returned DTO's type unconditional, and matches the
+  // INSERT's own `correct ? 1 : 0` above.
   return { wordId, correct: !!correct, createdAt };
 }
 
@@ -153,11 +163,11 @@ function record(db, wordId, correct, now = new Date()) {
 function clearForScope(db, { languageId, setId } = {}) {
   const clauses = [];
   const params = {};
-  if (languageId != null) {
+  if (languageId != null && languageId !== '') {
     clauses.push('languageId = @languageId');
     params.languageId = Number(languageId);
   }
-  if (setId != null) {
+  if (setId != null && setId !== '') {
     clauses.push('wordSetId = @setId');
     params.setId = Number(setId);
   }
