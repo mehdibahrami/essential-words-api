@@ -65,4 +65,22 @@ describe('Dutch past tense (OVT + participle)', () => {
       expect(got.participle).toBe(want.pp);
     });
   }
+  // Regression: 'regenen' shipped with its plural written as the singular ('regende'), so the
+  // OVT plural of an impersonal verb silently rendered as a non-form. The plural is rare in use
+  // but it is still a distinct spelling, and the table is the only place it comes from.
+  test("regenen's past plural is not a copy of its singular", () => {
+    expect(computeVerbPast('regenen').past).toEqual({ singular: 'regende', plural: 'regenden' });
+  });
+
+  // Structural sweep of the whole table, so the next entry cannot reintroduce the same defect:
+  // every Dutch past plural is the singular plus -n, and is never identical to it.
+  test('every IRREGULAR_PAST entry has a distinct, n-final plural', () => {
+    const offenders = Object.entries(IRREGULAR_PAST).filter(([, forms]) => {
+      if (!forms.plural) return true;
+      if (forms.plural === forms.singular) return true;
+      // Separables/phrasals carry the prefix as a trailing token; the inflection is on the head.
+      return !forms.plural.split(' ')[0].endsWith('n');
+    });
+    expect(offenders).toEqual([]);
+  });
 });

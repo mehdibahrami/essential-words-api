@@ -376,7 +376,7 @@ const IRREGULAR_PAST = {
   'reageren': { singular: 'reageerde', plural: 'reageerden', participle: 'gereageerd' },
   'realiseren': { singular: 'realiseerde', plural: 'realiseerden', participle: 'gerealiseerd' },
   'regelen': { singular: 'regelde', plural: 'regelden', participle: 'geregeld' },
-  'regenen': { singular: 'regende', plural: 'regende', participle: 'geregend' },
+  'regenen': { singular: 'regende', plural: 'regenden', participle: 'geregend' },
   'reizen': { singular: 'reisde', plural: 'reisden', participle: 'gereisd' },
   'rennen': { singular: 'rende', plural: 'renden', participle: 'gerend' },
   'repareren': { singular: 'repareerde', plural: 'repareerden', participle: 'gerepareerd' },
