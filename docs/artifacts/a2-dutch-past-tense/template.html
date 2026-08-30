@@ -1,0 +1,691 @@
+<title>A2 Verleden Tijd</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Vazirmatn:wght@400;500;700&display=swap">
+
+<style>
+/* ---- Tokens: complete light palette on bare :root ------------------------- */
+:root {
+  --ground:        #E9ECEF;
+  --surface:       #FFFFFF;
+  --surface-sunk:  #F1F3F6;
+  --line:          #D3D9E0;
+  --line-soft:     #E3E8ED;
+  --ink:           #0F1922;
+  --ink-muted:     #596775;
+  --ink-faint:     #8996A3;
+
+  --accent:        #1B4965;
+  --accent-soft:   #E2EBF1;
+
+  --weak:          #596775;
+  --weak-soft:     #E7EAEE;
+  --strong:        #8F5713;
+  --strong-soft:   #F6EAD8;
+  --irregular:     #97382B;
+  --irregular-soft:#F8E5E1;
+
+  --shadow:        0 1px 2px rgba(15, 25, 34, .06), 0 8px 24px -16px rgba(15, 25, 34, .28);
+
+  --step--1: clamp(.75rem, .72rem + .12vw, .8rem);
+  --step-0:  clamp(.875rem, .85rem + .14vw, .95rem);
+  --step-1:  clamp(1rem, .96rem + .2vw, 1.1rem);
+  --step-2:  clamp(1.35rem, 1.2rem + .7vw, 1.8rem);
+  --step-3:  clamp(1.9rem, 1.5rem + 1.9vw, 3.1rem);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:        #0C1418;
+    --surface:       #131E25;
+    --surface-sunk:  #101A20;
+    --line:          #24333D;
+    --line-soft:     #1B2830;
+    --ink:           #E3EBF1;
+    --ink-muted:     #93A2AF;
+    --ink-faint:     #6B7B88;
+
+    --accent:        #74B6DA;
+    --accent-soft:   #142B39;
+
+    --weak:          #93A2AF;
+    --weak-soft:     #1A252C;
+    --strong:        #DBA255;
+    --strong-soft:   #2C2113;
+    --irregular:     #E5836C;
+    --irregular-soft:#2F1A16;
+
+    --shadow:        0 1px 2px rgba(0, 0, 0, .5), 0 10px 28px -18px rgba(0, 0, 0, .9);
+  }
+}
+:root[data-theme="dark"] {
+  --ground:        #0C1418;
+  --surface:       #131E25;
+  --surface-sunk:  #101A20;
+  --line:          #24333D;
+  --line-soft:     #1B2830;
+  --ink:           #E3EBF1;
+  --ink-muted:     #93A2AF;
+  --ink-faint:     #6B7B88;
+
+  --accent:        #74B6DA;
+  --accent-soft:   #142B39;
+
+  --weak:          #93A2AF;
+  --weak-soft:     #1A252C;
+  --strong:        #DBA255;
+  --strong-soft:   #2C2113;
+  --irregular:     #E5836C;
+  --irregular-soft:#2F1A16;
+
+  --shadow:        0 1px 2px rgba(0, 0, 0, .5), 0 10px 28px -18px rgba(0, 0, 0, .9);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: var(--step-0);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 76rem; margin: 0 auto; padding: 0 clamp(.75rem, 3vw, 2rem); }
+
+/* ---- Masthead ------------------------------------------------------------ */
+.masthead { padding: clamp(2.5rem, 7vw, 5rem) 0 clamp(1.5rem, 3vw, 2.25rem); }
+.eyebrow {
+  display: flex; align-items: center; gap: .6rem;
+  font-size: var(--step--1); font-weight: 600;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+h1 {
+  font-family: "Familjen Grotesk", ui-sans-serif, system-ui, sans-serif;
+  font-size: var(--step-3);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -.025em;
+  text-wrap: balance;
+  margin: .5rem 0 0;
+}
+h1 .sub { display: block; color: var(--ink-faint); font-weight: 500; letter-spacing: -.015em; }
+
+.standfirst {
+  margin: 1rem 0 0;
+  max-width: 46ch;
+  color: var(--ink-muted);
+  font-size: var(--step-1);
+  line-height: 1.55;
+}
+
+/* ---- Stats --------------------------------------------------------------- */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 1px;
+  margin-top: clamp(1.75rem, 4vw, 2.75rem);
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.stat { background: var(--surface); padding: .95rem 1.05rem; }
+.stat dt {
+  font-size: var(--step--1); font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.stat dd {
+  margin: .3rem 0 0;
+  font-family: "Familjen Grotesk", sans-serif;
+  font-size: 1.9rem; font-weight: 700; line-height: 1;
+  letter-spacing: -.03em;
+  font-variant-numeric: tabular-nums;
+}
+.stat.is-weak dd      { color: var(--weak); }
+.stat.is-strong dd    { color: var(--strong); }
+.stat.is-irregular dd { color: var(--irregular); }
+
+/* ---- Toolbar ------------------------------------------------------------- */
+.toolbar {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--ground) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+  margin-top: clamp(1.75rem, 4vw, 2.5rem);
+}
+.toolbar-inner {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .6rem;
+  padding: .7rem 0;
+}
+.search {
+  flex: 1 1 14rem; min-width: 0;
+  display: flex; align-items: center; gap: .5rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: .45rem .7rem;
+}
+.search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.search svg { flex: none; width: 1rem; height: 1rem; color: var(--ink-faint); }
+.search input {
+  flex: 1; min-width: 0;
+  border: 0; background: none; color: inherit; font: inherit;
+  padding: 0;
+}
+.search input:focus { outline: none; }
+.search kbd {
+  flex: none;
+  font-family: "IBM Plex Mono", monospace; font-size: .7rem;
+  color: var(--ink-faint);
+  border: 1px solid var(--line); border-radius: 4px;
+  padding: .05rem .3rem;
+}
+
+.filters { display: flex; flex-wrap: wrap; gap: .35rem; }
+.chip {
+  font: inherit; font-size: var(--step--1); font-weight: 600;
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .42rem .7rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.chip:hover { border-color: var(--ink-faint); color: var(--ink); }
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip .dot { width: .5rem; height: .5rem; border-radius: 50%; background: currentColor; opacity: .55; }
+.chip[data-k="weak"]      { color: var(--weak); }
+.chip[data-k="strong"]    { color: var(--strong); }
+.chip[data-k="irregular"] { color: var(--irregular); }
+.chip[aria-pressed="true"] {
+  background: var(--ink); color: var(--surface); border-color: var(--ink);
+}
+.chip[aria-pressed="true"][data-k="weak"]      { background: var(--weak);      border-color: var(--weak); }
+.chip[aria-pressed="true"][data-k="strong"]    { background: var(--strong);    border-color: var(--strong); }
+.chip[aria-pressed="true"][data-k="irregular"] { background: var(--irregular); border-color: var(--irregular); }
+.chip[aria-pressed="true"] .dot { opacity: 1; }
+.chip[aria-pressed="true"][data-k="weak"] .dot,
+.chip[aria-pressed="true"][data-k="strong"] .dot,
+.chip[aria-pressed="true"][data-k="irregular"] .dot { background: var(--surface); }
+
+/* ---- Column header ------------------------------------------------------- */
+/* Sits in the toolbar but is not a filter, so it gets a divider and a square icon-only
+   footprint rather than the chips' pill shape. */
+.themetoggle {
+  position: relative; /* the divider below anchors here, not on the sticky toolbar */
+  flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.1rem; height: 2.1rem;
+  margin-left: .85rem;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+.themetoggle::before {
+  content: "";
+  position: absolute; left: -.5rem; top: 50%; transform: translateY(-50%);
+  width: 1px; height: 1.4rem; background: var(--line);
+}
+.themetoggle:hover { color: var(--ink); border-color: var(--ink-faint); }
+.themetoggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.themetoggle svg { width: 1.05rem; height: 1.05rem; }
+
+.colhead {
+  position: sticky; top: 3.5rem; z-index: 15;
+  background: var(--ground);
+  display: grid;
+  grid-template-columns: var(--cols);
+  gap: 1rem;
+  padding: .85rem 1rem .5rem;
+  font-size: var(--step--1); font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-faint);
+  border-bottom: 1px solid var(--line);
+}
+.colhead .persons { display: block; letter-spacing: .04em; text-transform: none; font-weight: 400; color: var(--ink-faint); opacity: .8; }
+
+/* ---- Table --------------------------------------------------------------- */
+:root { --cols: 2.5rem minmax(10rem, 1.2fr) minmax(7rem, 1.1fr) minmax(6rem, .9fr) minmax(6rem, .9fr); }
+
+.sheet { margin: clamp(1.5rem, 3vw, 2.25rem) 0 4rem; }
+
+.batch {
+  display: flex; align-items: baseline; gap: .75rem;
+  margin: 2rem 0 .5rem;
+  font-size: var(--step--1); font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.batch:first-child { margin-top: 0; }
+.batch::after { content: ""; flex: 1; height: 1px; background: var(--line-soft); }
+.batch .n { letter-spacing: .04em; text-transform: none; font-weight: 400; }
+
+.row {
+  display: grid;
+  grid-template-columns: var(--cols);
+  gap: 1rem;
+  align-items: baseline;
+  padding: .55rem 1rem;
+  border-bottom: 1px solid var(--line-soft);
+  border-left: 3px solid transparent;
+  background: var(--surface);
+}
+.row:hover { background: var(--surface-sunk); }
+.row.is-weak      { border-left-color: var(--weak-soft); }
+.row.is-strong    { border-left-color: var(--strong); }
+.row.is-irregular { border-left-color: var(--irregular); }
+
+.idx {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--step--1);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+.inf { min-width: 0; }
+.inf b {
+  font-family: "Familjen Grotesk", sans-serif;
+  font-weight: 600; font-size: var(--step-1);
+  letter-spacing: -.01em;
+  color: var(--ink);
+}
+.meanings {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .45rem;
+  margin-top: .1rem;
+}
+.fa {
+  direction: rtl; unicode-bidi: isolate;
+  font-family: "Vazirmatn", "IBM Plex Sans", sans-serif;
+  font-size: var(--step-0);
+  color: var(--ink-muted);
+}
+.gloss { font-size: var(--step--1); color: var(--ink-faint); }
+.gloss::before { content: "\00b7"; margin-right: .45rem; color: var(--line); }
+
+.form {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--step-0);
+  color: var(--ink);
+  min-width: 0; overflow-wrap: break-word;
+}
+.form.vd { font-weight: 600; color: var(--ink); }
+.row .form:not(.vd) { color: var(--ink-muted); }
+.form .none { color: var(--ink-faint); font-style: italic; }
+
+.headline { display: flex; flex-wrap: wrap; align-items: baseline; gap: .45rem; }
+.tag {
+  font-size: .68rem; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase;
+  padding: .12rem .4rem;
+  border-radius: 4px;
+}
+.tag.k-weak      { color: var(--weak);      background: var(--weak-soft); }
+.tag.k-strong    { color: var(--strong);    background: var(--strong-soft); }
+.tag.k-irregular { color: var(--irregular); background: var(--irregular-soft); }
+.tag.sep         { color: var(--accent);    background: var(--accent-soft); }
+
+.empty {
+  padding: 3rem 1rem; text-align: center; color: var(--ink-muted);
+  background: var(--surface); border-bottom: 1px solid var(--line-soft);
+}
+.empty b { display: block; font-family: "Familjen Grotesk", sans-serif; font-size: var(--step-1); color: var(--ink); margin-bottom: .25rem; }
+
+/* ---- Legend / footer ----------------------------------------------------- */
+/* The key sits above the table: it has to be read before the sheet makes sense.
+   Persian is the reader's own language, so the explanation runs RTL while every Dutch
+   fragment inside it stays LTR and isolated, or the bidi algorithm reorders the arrows
+   in the example chains. */
+.legend { margin-top: clamp(1.75rem, 4vw, 2.5rem); }
+.legend-label {
+  margin: 0 0 .6rem;
+  font-family: "Vazirmatn", "IBM Plex Sans", sans-serif;
+  font-size: var(--step--1); font-weight: 700;
+  color: var(--ink-faint);
+}
+.legend-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+}
+.legend-grid > div {
+  background: var(--surface);
+  padding: 1rem 1.1rem;
+  border-top: 2px solid transparent;
+}
+.legend .k-weak      { border-top-color: var(--weak-soft); }
+.legend .k-strong    { border-top-color: var(--strong); }
+.legend .k-irregular { border-top-color: var(--irregular); }
+
+.legend h3 {
+  display: flex; align-items: baseline; gap: .5rem;
+  margin: 0 0 .45rem;
+  font-family: "Vazirmatn", "IBM Plex Sans", sans-serif;
+  font-size: var(--step-1); font-weight: 700;
+}
+.legend h3 .nl {
+  direction: ltr; unicode-bidi: isolate;
+  font-family: "Familjen Grotesk", sans-serif;
+  font-size: var(--step-0); font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase;
+  opacity: .75;
+}
+.legend .k-weak h3      { color: var(--weak); }
+.legend .k-strong h3    { color: var(--strong); }
+.legend .k-irregular h3 { color: var(--irregular); }
+
+.legend p {
+  margin: 0;
+  font-family: "Vazirmatn", "IBM Plex Sans", sans-serif;
+  color: var(--ink-muted);
+  font-size: var(--step-0); line-height: 1.95;
+}
+.legend code {
+  direction: ltr; unicode-bidi: isolate;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .85em;
+  color: var(--ink);
+}
+.legend .ex {
+  direction: ltr; unicode-bidi: isolate;
+  margin-top: .7rem; padding-top: .6rem;
+  border-top: 1px solid var(--line-soft);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--step--1);
+  color: var(--ink);
+}
+.legend .ex .ovt { color: var(--ink-faint); }
+
+footer {
+  border-top: 1px solid var(--line);
+  padding: 1.5rem 0 3rem;
+  color: var(--ink-faint); font-size: var(--step--1);
+}
+footer p { margin: 0 0 .4rem; max-width: 60ch; }
+
+@media (max-width: 46rem) {
+  :root { --cols: 2.25rem 1fr; }
+  .colhead { display: none; }
+  .row { gap: .35rem 1rem; padding: .85rem .75rem; }
+  .inf { grid-column: 2; }
+  .form { grid-column: 2; display: flex; gap: .6rem; align-items: baseline; }
+  .form::before {
+    content: attr(data-label);
+    flex: none; width: 5.5rem;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: .68rem; font-weight: 600;
+    letter-spacing: .06em; text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">A2 essentials &middot; Nederlands</p>
+    <h1>Voltooid Deelwoord<span class="sub">167 werkwoorden</span></h1>
+    <p class="standfirst">
+      Every verb in the A2 essentials set led by its past participle, with the simple past
+      alongside, in the order the words were added to the set. The three classes below
+      describe the participle &mdash; not the O.V.T.
+    </p>
+
+    <dl class="stats">
+      <div class="stat"><dt>Verbs</dt><dd id="s-total">167</dd></div>
+      <div class="stat is-weak"><dt>Regelmatig</dt><dd id="s-weak">99</dd></div>
+      <div class="stat is-strong"><dt>Sterk</dt><dd id="s-strong">54</dd></div>
+      <div class="stat is-irregular"><dt>Onregelmatig</dt><dd id="s-irregular">14</dd></div>
+      <div class="stat"><dt>Scheidbaar</dt><dd id="s-sep">25</dd></div>
+    </dl>
+
+    <section class="legend" dir="rtl" lang="fa">
+      <p class="legend-label">سه دستهٔ اسم مفعول</p>
+      <div class="legend-grid">
+        <div class="k-weak">
+          <h3><span class="nl">Regelmatig</span> باقاعده</h3>
+          <p>بدون برچسب، و بیشترِ فهرست. اسم مفعول دقیقاً <code>ge-</code> + بنِ دست‌نخوردهٔ فعل + <code>-t/-d</code> است. انتخاب میان <code>t</code> و <code>d</code> را قاعدهٔ <code>’t kofschip</code> تعیین می‌کند: اگر بنِ فعل به یکی از حروف <code>t k f s ch p</code> ختم شود <code>-t</code> می‌گیرد، وگرنه <code>-d</code>. ماضیِ این فعل‌ها ممکن است بی‌قاعده باشد و باز هم اینجا باشند — ملاک، اسم مفعول است (<code>zeggen</code> → <code>zei</code>، اما <code>gezegd</code>).</p>
+          <p class="ex" dir="ltr">werken &rarr; gewerkt <span class="ovt">(werkte)</span></p>
+        </div>
+        <div class="k-strong">
+          <h3><span class="nl">Sterk</span> قوی</h3>
+          <p>اسم مفعول به <code>-en</code> ختم می‌شود (یا به <code>-aan</code> در <code>gedaan</code>، <code>gegaan</code>، <code>gestaan</code>) و معمولاً مصوتِ بن هم تغییر می‌کند. قاعده‌ای برای ساختنِ آن‌ها وجود ندارد و باید حفظ شوند، اما الگوهای تکرارشونده کمک می‌کنند — مثلاً همان <code>i → o → o</code> که در <code>zingen</code> و <code>drinken</code> تکرار می‌شود. فعل‌هایی مانند <code>lachen</code> و <code>wassen</code> که ماضیِ باقاعده دارند اما اسم مفعولِ <code>-en</code>، همینجا قرار می‌گیرند.</p>
+          <p class="ex" dir="ltr">zingen &rarr; gezongen <span class="ovt">(zong)</span></p>
+        </div>
+        <div class="k-irregular">
+          <h3><span class="nl">Onregelmatig</span> بی‌قاعده</h3>
+          <p>اسم مفعول به <code>-t/-d</code> ختم می‌شود — ظاهراً باقاعده — اما بنِ فعل در آن تغییر کرده است؛ همین آن‌ها را از دستهٔ باقاعده جدا می‌کند (بنِ <code>kopen</code> ، <code>koop</code> است، نه <code>koch</code>). افعال وجهی (<code>moeten</code>، <code>mogen</code>، <code>willen</code>) و همچنین <code>zijn</code> و <code>hebben</code> در همین دسته‌اند. کوچک‌ترین دسته و همانی که باید حفظ شود.</p>
+          <p class="ex" dir="ltr">kopen &rarr; gekocht <span class="ovt">(kocht)</span></p>
+        </div>
+      </div>
+    </section>
+  </header>
+</div>
+
+<div class="toolbar">
+  <div class="wrap toolbar-inner">
+    <label class="search">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+        <circle cx="9" cy="9" r="6"/><path d="m13.5 13.5 3.5 3.5" stroke-linecap="round"/>
+      </svg>
+      <input id="q" type="search" placeholder="Search Dutch, Persian or English&hellip;" autocomplete="off" aria-label="Search verbs">
+      <kbd>/</kbd>
+    </label>
+    <div class="filters" role="group" aria-label="Filter by verb type">
+      <button class="chip" data-f="all" data-k="all" aria-pressed="true">Alle</button>
+      <button class="chip" data-f="class" data-k="weak" aria-pressed="false"><span class="dot"></span>Regelmatig</button>
+      <button class="chip" data-f="class" data-k="strong" aria-pressed="false"><span class="dot"></span>Sterk</button>
+      <button class="chip" data-f="class" data-k="irregular" aria-pressed="false"><span class="dot"></span>Onregelmatig</button>
+      <button class="chip" data-f="sep" data-k="sep" aria-pressed="false">Scheidbaar</button>
+    </div>
+    <button class="themetoggle" id="theme" type="button" aria-label="Colour theme"></button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="colhead">
+    <span>#</span>
+    <span>Infinitief</span>
+    <span>Voltooid deelwoord <span class="persons">ik heb &hellip;</span></span>
+    <span>O.V.T. <span class="persons">ik / jij / hij</span></span>
+    <span>O.V.T. <span class="persons">wij / jullie / zij</span></span>
+  </div>
+
+  <main class="sheet" id="sheet"></main>
+
+  <footer>
+    <p>
+      Separable verbs keep their prefix in the participle with <em>-ge-</em> infixed
+      (<em>aangekomen</em>), and are shown split in the O.V.T., the way they appear in a main
+      clause (<em>ik kwam aan</em>). Verbs beginning <em>be-</em>, <em>ver-</em>, <em>ont-</em>
+      or <em>her-</em> take no <em>ge-</em> at all (<em>begonnen</em>, <em>bezocht</em>).
+    </p>
+    <p id="meta"></p>
+  </footer>
+</div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+(function () {
+  "use strict";
+
+  var payload = JSON.parse(document.getElementById("data").textContent);
+  var verbs = payload.verbs;
+  var sheet = document.getElementById("sheet");
+  var qInput = document.getElementById("q");
+
+  var state = { q: "", cls: null, sep: false };
+
+  var MONTHS = ["January","February","March","April","May","June",
+                "July","August","September","October","November","December"];
+
+  function batchLabel(iso) {
+    var d = new Date(iso);
+    return d.getUTCDate() + " " + MONTHS[d.getUTCMonth()] + " " + d.getUTCFullYear();
+  }
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  var CLASS_LABEL = { weak: "Regelmatig", strong: "Sterk", irregular: "Onregelmatig" };
+
+  function matches(v) {
+    if (state.cls && v.class !== state.cls) return false;
+    if (state.sep && !v.separable) return false;
+    if (!state.q) return true;
+    var hay = (v.word + " " + v.translation + " " + v.definition + " " +
+               v.pastSingular + " " + v.pastPlural + " " + (v.pastParticiple || "")).toLowerCase();
+    return hay.indexOf(state.q) !== -1;
+  }
+
+  function render() {
+    var shown = verbs.filter(matches);
+    var html = "";
+    var batch = null;
+
+    shown.forEach(function (v) {
+      var b = batchLabel(v.createdAt);
+      if (b !== batch) {
+        batch = b;
+        var n = shown.filter(function (x) { return batchLabel(x.createdAt) === b; }).length;
+        html += '<p class="batch">Added ' + esc(b) + ' <span class="n">' + n + '</span></p>';
+      }
+
+      html += '<article class="row is-' + v.class + '">' +
+        '<span class="idx">' + v.n + '</span>' +
+        '<span class="inf">' +
+          '<span class="headline"><b>' + esc(v.word) + '</b>' +
+            // Only the exceptions are tagged. A weak verb is the derivable default, so tagging
+            // all 95 of them would print the word "Regelmatig" down two thirds of the sheet
+            // and bury the 72 that actually have to be memorised.
+            (v.class !== 'weak'
+              ? '<span class="tag k-' + v.class + '">' + CLASS_LABEL[v.class] + '</span>' : '') +
+            (v.separable ? '<span class="tag sep">scheidbaar</span>' : '') +
+          '</span>' +
+          '<span class="meanings">' +
+            '<span class="fa">' + esc(v.translation) + '</span>' +
+            '<span class="gloss">' + esc(v.definition) + '</span>' +
+          '</span>' +
+        '</span>' +
+        '<span class="form vd" data-label="Volt. deelw.">' +
+          (v.pastParticiple ? esc(v.pastParticiple) : '<span class="none">geen</span>') +
+        '</span>' +
+        '<span class="form" data-label="O.V.T. enk.">' + esc(v.pastSingular) + '</span>' +
+        '<span class="form" data-label="O.V.T. mv.">' + esc(v.pastPlural) + '</span>' +
+      '</article>';
+    });
+
+    if (!shown.length) {
+      html = '<div class="empty"><b>Niets gevonden</b>No verb matches that search.</div>';
+    }
+    sheet.innerHTML = html;
+
+    document.getElementById("s-total").textContent = shown.length;
+    ["weak", "strong", "irregular"].forEach(function (k) {
+      document.getElementById("s-" + k).textContent =
+        shown.filter(function (v) { return v.class === k; }).length;
+    });
+    document.getElementById("s-sep").textContent =
+      shown.filter(function (v) { return v.separable; }).length;
+  }
+
+  qInput.addEventListener("input", function () {
+    state.q = qInput.value.trim().toLowerCase();
+    render();
+  });
+
+  document.querySelectorAll(".chip").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var f = btn.dataset.f, k = btn.dataset.k;
+      if (f === "all") { state.cls = null; state.sep = false; }
+      else if (f === "sep") { state.sep = !state.sep; }
+      else { state.cls = state.cls === k ? null : k; }
+
+      document.querySelectorAll(".chip").forEach(function (b) {
+        var bf = b.dataset.f, bk = b.dataset.k;
+        var on = bf === "all" ? (!state.cls && !state.sep)
+               : bf === "sep" ? state.sep
+               : state.cls === bk;
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+      render();
+    });
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "/" && document.activeElement !== qInput) {
+      e.preventDefault();
+      qInput.focus();
+      qInput.select();
+    } else if (e.key === "Escape" && document.activeElement === qInput) {
+      qInput.value = ""; state.q = ""; render(); qInput.blur();
+    }
+  });
+
+  /* ---- Colour theme -------------------------------------------------------
+     Three states, not two. The page is published into a viewer that has its own light/dark
+     setting and may stamp data-theme on <html> itself, so "auto" means *defer to that* and is
+     represented by touching nothing: an unclicked page must not override a choice the reader
+     already made outside it. Only a stored preference, or a click, writes the attribute.
+     Every storage access is guarded: the accessor itself throws in some embedding contexts. */
+  var THEMES = ["auto", "light", "dark"];
+  var ICONS = {
+    auto:  '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">' +
+             '<circle cx="10" cy="10" r="7"/><path d="M10 3a7 7 0 0 1 0 14Z" fill="currentColor" stroke="none"/></svg>',
+    light: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">' +
+             '<circle cx="10" cy="10" r="3.6"/><path d="M10 1.7v1.8M10 16.5v1.8M18.3 10h-1.8M3.5 10H1.7' +
+             'M15.9 4.1l-1.3 1.3M5.4 14.6l-1.3 1.3M15.9 15.9l-1.3-1.3M5.4 5.4L4.1 4.1"/></svg>',
+    dark:  '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">' +
+             '<path d="M16.5 12.6A7 7 0 0 1 7.4 3.5a7 7 0 1 0 9.1 9.1Z"/></svg>'
+  };
+  var LABEL = { auto: "Theme: match my device", light: "Theme: light", dark: "Theme: dark" };
+
+  var themeBtn = document.getElementById("theme");
+  var stored = null;
+  try { stored = localStorage.getItem("theme-v1"); } catch (e) { stored = null; }
+  var theme = THEMES.indexOf(stored) !== -1 ? stored : "auto";
+
+  function paintTheme(writeDom) {
+    if (writeDom) {
+      if (theme === "auto") document.documentElement.removeAttribute("data-theme");
+      else document.documentElement.setAttribute("data-theme", theme);
+    }
+    themeBtn.innerHTML = ICONS[theme];
+    themeBtn.setAttribute("aria-label", LABEL[theme] + " \u2014 click to change");
+    themeBtn.title = LABEL[theme];
+  }
+
+  themeBtn.addEventListener("click", function () {
+    theme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
+    try { localStorage.setItem("theme-v1", theme); } catch (e) { /* private mode; fine */ }
+    paintTheme(true);
+  });
+
+  // On load, only write the DOM when the reader has a stored preference for THIS page.
+  paintTheme(theme !== "auto");
+
+  document.getElementById("meta").textContent =
+    payload.count + " verbs from the \u201c" + payload.setName + "\u201d set \u00b7 " +
+    "forms as served by the Essential Words API \u00b7 generated " +
+    payload.generatedAt.slice(0, 10);
+
+  render();
+})();
+</script>

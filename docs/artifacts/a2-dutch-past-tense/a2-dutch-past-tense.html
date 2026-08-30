@@ -1,0 +1,691 @@
+<title>A2 Verleden Tijd</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Vazirmatn:wght@400;500;700&display=swap">
+
+<style>
+/* ---- Tokens: complete light palette on bare :root ------------------------- */
+:root {
+  --ground:        #E9ECEF;
+  --surface:       #FFFFFF;
+  --surface-sunk:  #F1F3F6;
+  --line:          #D3D9E0;
+  --line-soft:     #E3E8ED;
+  --ink:           #0F1922;
+  --ink-muted:     #596775;
+  --ink-faint:     #8996A3;
+
+  --accent:        #1B4965;
+  --accent-soft:   #E2EBF1;
+
+  --weak:          #596775;
+  --weak-soft:     #E7EAEE;
+  --strong:        #8F5713;
+  --strong-soft:   #F6EAD8;
+  --irregular:     #97382B;
+  --irregular-soft:#F8E5E1;
+
+  --shadow:        0 1px 2px rgba(15, 25, 34, .06), 0 8px 24px -16px rgba(15, 25, 34, .28);
+
+  --step--1: clamp(.75rem, .72rem + .12vw, .8rem);
+  --step-0:  clamp(.875rem, .85rem + .14vw, .95rem);
+  --step-1:  clamp(1rem, .96rem + .2vw, 1.1rem);
+  --step-2:  clamp(1.35rem, 1.2rem + .7vw, 1.8rem);
+  --step-3:  clamp(1.9rem, 1.5rem + 1.9vw, 3.1rem);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:        #0C1418;
+    --surface:       #131E25;
+    --surface-sunk:  #101A20;
+    --line:          #24333D;
+    --line-soft:     #1B2830;
+    --ink:           #E3EBF1;
+    --ink-muted:     #93A2AF;
+    --ink-faint:     #6B7B88;
+
+    --accent:        #74B6DA;
+    --accent-soft:   #142B39;
+
+    --weak:          #93A2AF;
+    --weak-soft:     #1A252C;
+    --strong:        #DBA255;
+    --strong-soft:   #2C2113;
+    --irregular:     #E5836C;
+    --irregular-soft:#2F1A16;
+
+    --shadow:        0 1px 2px rgba(0, 0, 0, .5), 0 10px 28px -18px rgba(0, 0, 0, .9);
+  }
+}
+:root[data-theme="dark"] {
+  --ground:        #0C1418;
+  --surface:       #131E25;
+  --surface-sunk:  #101A20;
+  --line:          #24333D;
+  --line-soft:     #1B2830;
+  --ink:           #E3EBF1;
+  --ink-muted:     #93A2AF;
+  --ink-faint:     #6B7B88;
+
+  --accent:        #74B6DA;
+  --accent-soft:   #142B39;
+
+  --weak:          #93A2AF;
+  --weak-soft:     #1A252C;
+  --strong:        #DBA255;
+  --strong-soft:   #2C2113;
+  --irregular:     #E5836C;
+  --irregular-soft:#2F1A16;
+
+  --shadow:        0 1px 2px rgba(0, 0, 0, .5), 0 10px 28px -18px rgba(0, 0, 0, .9);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: var(--step-0);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 76rem; margin: 0 auto; padding: 0 clamp(.75rem, 3vw, 2rem); }
+
+/* ---- Masthead ------------------------------------------------------------ */
+.masthead { padding: clamp(2.5rem, 7vw, 5rem) 0 clamp(1.5rem, 3vw, 2.25rem); }
+.eyebrow {
+  display: flex; align-items: center; gap: .6rem;
+  font-size: var(--step--1); font-weight: 600;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+h1 {
+  font-family: "Familjen Grotesk", ui-sans-serif, system-ui, sans-serif;
+  font-size: var(--step-3);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -.025em;
+  text-wrap: balance;
+  margin: .5rem 0 0;
+}
+h1 .sub { display: block; color: var(--ink-faint); font-weight: 500; letter-spacing: -.015em; }
+
+.standfirst {
+  margin: 1rem 0 0;
+  max-width: 46ch;
+  color: var(--ink-muted);
+  font-size: var(--step-1);
+  line-height: 1.55;
+}
+
+/* ---- Stats --------------------------------------------------------------- */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 1px;
+  margin-top: clamp(1.75rem, 4vw, 2.75rem);
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.stat { background: var(--surface); padding: .95rem 1.05rem; }
+.stat dt {
+  font-size: var(--step--1); font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.stat dd {
+  margin: .3rem 0 0;
+  font-family: "Familjen Grotesk", sans-serif;
+  font-size: 1.9rem; font-weight: 700; line-height: 1;
+  letter-spacing: -.03em;
+  font-variant-numeric: tabular-nums;
+}
+.stat.is-weak dd      { color: var(--weak); }
+.stat.is-strong dd    { color: var(--strong); }
+.stat.is-irregular dd { color: var(--irregular); }
+
+/* ---- Toolbar ------------------------------------------------------------- */
+.toolbar {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--ground) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+  margin-top: clamp(1.75rem, 4vw, 2.5rem);
+}
+.toolbar-inner {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .6rem;
+  padding: .7rem 0;
+}
+.search {
+  flex: 1 1 14rem; min-width: 0;
+  display: flex; align-items: center; gap: .5rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: .45rem .7rem;
+}
+.search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.search svg { flex: none; width: 1rem; height: 1rem; color: var(--ink-faint); }
+.search input {
+  flex: 1; min-width: 0;
+  border: 0; background: none; color: inherit; font: inherit;
+  padding: 0;
+}
+.search input:focus { outline: none; }
+.search kbd {
+  flex: none;
+  font-family: "IBM Plex Mono", monospace; font-size: .7rem;
+  color: var(--ink-faint);
+  border: 1px solid var(--line); border-radius: 4px;
+  padding: .05rem .3rem;
+}
+
+.filters { display: flex; flex-wrap: wrap; gap: .35rem; }
+.chip {
+  font: inherit; font-size: var(--step--1); font-weight: 600;
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .42rem .7rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.chip:hover { border-color: var(--ink-faint); color: var(--ink); }
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip .dot { width: .5rem; height: .5rem; border-radius: 50%; background: currentColor; opacity: .55; }
+.chip[data-k="weak"]      { color: var(--weak); }
+.chip[data-k="strong"]    { color: var(--strong); }
+.chip[data-k="irregular"] { color: var(--irregular); }
+.chip[aria-pressed="true"] {
+  background: var(--ink); color: var(--surface); border-color: var(--ink);
+}
+.chip[aria-pressed="true"][data-k="weak"]      { background: var(--weak);      border-color: var(--weak); }
+.chip[aria-pressed="true"][data-k="strong"]    { background: var(--strong);    border-color: var(--strong); }
+.chip[aria-pressed="true"][data-k="irregular"] { background: var(--irregular); border-color: var(--irregular); }
+.chip[aria-pressed="true"] .dot { opacity: 1; }
+.chip[aria-pressed="true"][data-k="weak"] .dot,
+.chip[aria-pressed="true"][data-k="strong"] .dot,
+.chip[aria-pressed="true"][data-k="irregular"] .dot { background: var(--surface); }
+
+/* ---- Column header ------------------------------------------------------- */
+/* Sits in the toolbar but is not a filter, so it gets a divider and a square icon-only
+   footprint rather than the chips' pill shape. */
+.themetoggle {
+  position: relative; /* the divider below anchors here, not on the sticky toolbar */
+  flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.1rem; height: 2.1rem;
+  margin-left: .85rem;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+.themetoggle::before {
+  content: "";
+  position: absolute; left: -.5rem; top: 50%; transform: translateY(-50%);
+  width: 1px; height: 1.4rem; background: var(--line);
+}
+.themetoggle:hover { color: var(--ink); border-color: var(--ink-faint); }
+.themetoggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.themetoggle svg { width: 1.05rem; height: 1.05rem; }
+
+.colhead {
+  position: sticky; top: 3.5rem; z-index: 15;
+  background: var(--ground);
+  display: grid;
+  grid-template-columns: var(--cols);
+  gap: 1rem;
+  padding: .85rem 1rem .5rem;
+  font-size: var(--step--1); font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-faint);
+  border-bottom: 1px solid var(--line);
+}
+.colhead .persons { display: block; letter-spacing: .04em; text-transform: none; font-weight: 400; color: var(--ink-faint); opacity: .8; }
+
+/* ---- Table --------------------------------------------------------------- */
+:root { --cols: 2.5rem minmax(10rem, 1.2fr) minmax(7rem, 1.1fr) minmax(6rem, .9fr) minmax(6rem, .9fr); }
+
+.sheet { margin: clamp(1.5rem, 3vw, 2.25rem) 0 4rem; }
+
+.batch {
+  display: flex; align-items: baseline; gap: .75rem;
+  margin: 2rem 0 .5rem;
+  font-size: var(--step--1); font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.batch:first-child { margin-top: 0; }
+.batch::after { content: ""; flex: 1; height: 1px; background: var(--line-soft); }
+.batch .n { letter-spacing: .04em; text-transform: none; font-weight: 400; }
+
+.row {
+  display: grid;
+  grid-template-columns: var(--cols);
+  gap: 1rem;
+  align-items: baseline;
+  padding: .55rem 1rem;
+  border-bottom: 1px solid var(--line-soft);
+  border-left: 3px solid transparent;
+  background: var(--surface);
+}
+.row:hover { background: var(--surface-sunk); }
+.row.is-weak      { border-left-color: var(--weak-soft); }
+.row.is-strong    { border-left-color: var(--strong); }
+.row.is-irregular { border-left-color: var(--irregular); }
+
+.idx {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--step--1);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+.inf { min-width: 0; }
+.inf b {
+  font-family: "Familjen Grotesk", sans-serif;
+  font-weight: 600; font-size: var(--step-1);
+  letter-spacing: -.01em;
+  color: var(--ink);
+}
+.meanings {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .45rem;
+  margin-top: .1rem;
+}
+.fa {
+  direction: rtl; unicode-bidi: isolate;
+  font-family: "Vazirmatn", "IBM Plex Sans", sans-serif;
+  font-size: var(--step-0);
+  color: var(--ink-muted);
+}
+.gloss { font-size: var(--step--1); color: var(--ink-faint); }
+.gloss::before { content: "\00b7"; margin-right: .45rem; color: var(--line); }
+
+.form {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--step-0);
+  color: var(--ink);
+  min-width: 0; overflow-wrap: break-word;
+}
+.form.vd { font-weight: 600; color: var(--ink); }
+.row .form:not(.vd) { color: var(--ink-muted); }
+.form .none { color: var(--ink-faint); font-style: italic; }
+
+.headline { display: flex; flex-wrap: wrap; align-items: baseline; gap: .45rem; }
+.tag {
+  font-size: .68rem; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase;
+  padding: .12rem .4rem;
+  border-radius: 4px;
+}
+.tag.k-weak      { color: var(--weak);      background: var(--weak-soft); }
+.tag.k-strong    { color: var(--strong);    background: var(--strong-soft); }
+.tag.k-irregular { color: var(--irregular); background: var(--irregular-soft); }
+.tag.sep         { color: var(--accent);    background: var(--accent-soft); }
+
+.empty {
+  padding: 3rem 1rem; text-align: center; color: var(--ink-muted);
+  background: var(--surface); border-bottom: 1px solid var(--line-soft);
+}
+.empty b { display: block; font-family: "Familjen Grotesk", sans-serif; font-size: var(--step-1); color: var(--ink); margin-bottom: .25rem; }
+
+/* ---- Legend / footer ----------------------------------------------------- */
+/* The key sits above the table: it has to be read before the sheet makes sense.
+   Persian is the reader's own language, so the explanation runs RTL while every Dutch
+   fragment inside it stays LTR and isolated, or the bidi algorithm reorders the arrows
+   in the example chains. */
+.legend { margin-top: clamp(1.75rem, 4vw, 2.5rem); }
+.legend-label {
+  margin: 0 0 .6rem;
+  font-family: "Vazirmatn", "IBM Plex Sans", sans-serif;
+  font-size: var(--step--1); font-weight: 700;
+  color: var(--ink-faint);
+}
+.legend-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+}
+.legend-grid > div {
+  background: var(--surface);
+  padding: 1rem 1.1rem;
+  border-top: 2px solid transparent;
+}
+.legend .k-weak      { border-top-color: var(--weak-soft); }
+.legend .k-strong    { border-top-color: var(--strong); }
+.legend .k-irregular { border-top-color: var(--irregular); }
+
+.legend h3 {
+  display: flex; align-items: baseline; gap: .5rem;
+  margin: 0 0 .45rem;
+  font-family: "Vazirmatn", "IBM Plex Sans", sans-serif;
+  font-size: var(--step-1); font-weight: 700;
+}
+.legend h3 .nl {
+  direction: ltr; unicode-bidi: isolate;
+  font-family: "Familjen Grotesk", sans-serif;
+  font-size: var(--step-0); font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase;
+  opacity: .75;
+}
+.legend .k-weak h3      { color: var(--weak); }
+.legend .k-strong h3    { color: var(--strong); }
+.legend .k-irregular h3 { color: var(--irregular); }
+
+.legend p {
+  margin: 0;
+  font-family: "Vazirmatn", "IBM Plex Sans", sans-serif;
+  color: var(--ink-muted);
+  font-size: var(--step-0); line-height: 1.95;
+}
+.legend code {
+  direction: ltr; unicode-bidi: isolate;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .85em;
+  color: var(--ink);
+}
+.legend .ex {
+  direction: ltr; unicode-bidi: isolate;
+  margin-top: .7rem; padding-top: .6rem;
+  border-top: 1px solid var(--line-soft);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--step--1);
+  color: var(--ink);
+}
+.legend .ex .ovt { color: var(--ink-faint); }
+
+footer {
+  border-top: 1px solid var(--line);
+  padding: 1.5rem 0 3rem;
+  color: var(--ink-faint); font-size: var(--step--1);
+}
+footer p { margin: 0 0 .4rem; max-width: 60ch; }
+
+@media (max-width: 46rem) {
+  :root { --cols: 2.25rem 1fr; }
+  .colhead { display: none; }
+  .row { gap: .35rem 1rem; padding: .85rem .75rem; }
+  .inf { grid-column: 2; }
+  .form { grid-column: 2; display: flex; gap: .6rem; align-items: baseline; }
+  .form::before {
+    content: attr(data-label);
+    flex: none; width: 5.5rem;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: .68rem; font-weight: 600;
+    letter-spacing: .06em; text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">A2 essentials &middot; Nederlands</p>
+    <h1>Voltooid Deelwoord<span class="sub">167 werkwoorden</span></h1>
+    <p class="standfirst">
+      Every verb in the A2 essentials set led by its past participle, with the simple past
+      alongside, in the order the words were added to the set. The three classes below
+      describe the participle &mdash; not the O.V.T.
+    </p>
+
+    <dl class="stats">
+      <div class="stat"><dt>Verbs</dt><dd id="s-total">167</dd></div>
+      <div class="stat is-weak"><dt>Regelmatig</dt><dd id="s-weak">99</dd></div>
+      <div class="stat is-strong"><dt>Sterk</dt><dd id="s-strong">54</dd></div>
+      <div class="stat is-irregular"><dt>Onregelmatig</dt><dd id="s-irregular">14</dd></div>
+      <div class="stat"><dt>Scheidbaar</dt><dd id="s-sep">25</dd></div>
+    </dl>
+
+    <section class="legend" dir="rtl" lang="fa">
+      <p class="legend-label">&#1587;&#1607; &#1583;&#1587;&#1578;&#1607;&#1620; &#1575;&#1587;&#1605; &#1605;&#1601;&#1593;&#1608;&#1604;</p>
+      <div class="legend-grid">
+        <div class="k-weak">
+          <h3><span class="nl">Regelmatig</span> &#1576;&#1575;&#1602;&#1575;&#1593;&#1583;&#1607;</h3>
+          <p>&#1576;&#1583;&#1608;&#1606; &#1576;&#1585;&#1670;&#1587;&#1576;&#1548; &#1608; &#1576;&#1740;&#1588;&#1578;&#1585;&#1616; &#1601;&#1607;&#1585;&#1587;&#1578;. &#1575;&#1587;&#1605; &#1605;&#1601;&#1593;&#1608;&#1604; &#1583;&#1602;&#1740;&#1602;&#1575;&#1611; <code>ge-</code> + &#1576;&#1606;&#1616; &#1583;&#1587;&#1578;&#8204;&#1606;&#1582;&#1608;&#1585;&#1583;&#1607;&#1620; &#1601;&#1593;&#1604; + <code>-t/-d</code> &#1575;&#1587;&#1578;. &#1575;&#1606;&#1578;&#1582;&#1575;&#1576; &#1605;&#1740;&#1575;&#1606; <code>t</code> &#1608; <code>d</code> &#1585;&#1575; &#1602;&#1575;&#1593;&#1583;&#1607;&#1620; <code>&#8217;t kofschip</code> &#1578;&#1593;&#1740;&#1740;&#1606; &#1605;&#1740;&#8204;&#1705;&#1606;&#1583;: &#1575;&#1711;&#1585; &#1576;&#1606;&#1616; &#1601;&#1593;&#1604; &#1576;&#1607; &#1740;&#1705;&#1740; &#1575;&#1586; &#1581;&#1585;&#1608;&#1601; <code>t k f s ch p</code> &#1582;&#1578;&#1605; &#1588;&#1608;&#1583; <code>-t</code> &#1605;&#1740;&#8204;&#1711;&#1740;&#1585;&#1583;&#1548; &#1608;&#1711;&#1585;&#1606;&#1607; <code>-d</code>. &#1605;&#1575;&#1590;&#1740;&#1616; &#1575;&#1740;&#1606; &#1601;&#1593;&#1604;&#8204;&#1607;&#1575; &#1605;&#1605;&#1705;&#1606; &#1575;&#1587;&#1578; &#1576;&#1740;&#8204;&#1602;&#1575;&#1593;&#1583;&#1607; &#1576;&#1575;&#1588;&#1583; &#1608; &#1576;&#1575;&#1586; &#1607;&#1605; &#1575;&#1740;&#1606;&#1580;&#1575; &#1576;&#1575;&#1588;&#1606;&#1583; &#8212; &#1605;&#1604;&#1575;&#1705;&#1548; &#1575;&#1587;&#1605; &#1605;&#1601;&#1593;&#1608;&#1604; &#1575;&#1587;&#1578; (<code>zeggen</code> &#8594; <code>zei</code>&#1548; &#1575;&#1605;&#1575; <code>gezegd</code>).</p>
+          <p class="ex" dir="ltr">werken &rarr; gewerkt <span class="ovt">(werkte)</span></p>
+        </div>
+        <div class="k-strong">
+          <h3><span class="nl">Sterk</span> &#1602;&#1608;&#1740;</h3>
+          <p>&#1575;&#1587;&#1605; &#1605;&#1601;&#1593;&#1608;&#1604; &#1576;&#1607; <code>-en</code> &#1582;&#1578;&#1605; &#1605;&#1740;&#8204;&#1588;&#1608;&#1583; (&#1740;&#1575; &#1576;&#1607; <code>-aan</code> &#1583;&#1585; <code>gedaan</code>&#1548; <code>gegaan</code>&#1548; <code>gestaan</code>) &#1608; &#1605;&#1593;&#1605;&#1608;&#1604;&#1575;&#1611; &#1605;&#1589;&#1608;&#1578;&#1616; &#1576;&#1606; &#1607;&#1605; &#1578;&#1594;&#1740;&#1740;&#1585; &#1605;&#1740;&#8204;&#1705;&#1606;&#1583;. &#1602;&#1575;&#1593;&#1583;&#1607;&#8204;&#1575;&#1740; &#1576;&#1585;&#1575;&#1740; &#1587;&#1575;&#1582;&#1578;&#1606;&#1616; &#1570;&#1606;&#8204;&#1607;&#1575; &#1608;&#1580;&#1608;&#1583; &#1606;&#1583;&#1575;&#1585;&#1583; &#1608; &#1576;&#1575;&#1740;&#1583; &#1581;&#1601;&#1592; &#1588;&#1608;&#1606;&#1583;&#1548; &#1575;&#1605;&#1575; &#1575;&#1604;&#1711;&#1608;&#1607;&#1575;&#1740; &#1578;&#1705;&#1585;&#1575;&#1585;&#1588;&#1608;&#1606;&#1583;&#1607; &#1705;&#1605;&#1705; &#1605;&#1740;&#8204;&#1705;&#1606;&#1606;&#1583; &#8212; &#1605;&#1579;&#1604;&#1575;&#1611; &#1607;&#1605;&#1575;&#1606; <code>i &#8594; o &#8594; o</code> &#1705;&#1607; &#1583;&#1585; <code>zingen</code> &#1608; <code>drinken</code> &#1578;&#1705;&#1585;&#1575;&#1585; &#1605;&#1740;&#8204;&#1588;&#1608;&#1583;. &#1601;&#1593;&#1604;&#8204;&#1607;&#1575;&#1740;&#1740; &#1605;&#1575;&#1606;&#1606;&#1583; <code>lachen</code> &#1608; <code>wassen</code> &#1705;&#1607; &#1605;&#1575;&#1590;&#1740;&#1616; &#1576;&#1575;&#1602;&#1575;&#1593;&#1583;&#1607; &#1583;&#1575;&#1585;&#1606;&#1583; &#1575;&#1605;&#1575; &#1575;&#1587;&#1605; &#1605;&#1601;&#1593;&#1608;&#1604;&#1616; <code>-en</code>&#1548; &#1607;&#1605;&#1740;&#1606;&#1580;&#1575; &#1602;&#1585;&#1575;&#1585; &#1605;&#1740;&#8204;&#1711;&#1740;&#1585;&#1606;&#1583;.</p>
+          <p class="ex" dir="ltr">zingen &rarr; gezongen <span class="ovt">(zong)</span></p>
+        </div>
+        <div class="k-irregular">
+          <h3><span class="nl">Onregelmatig</span> &#1576;&#1740;&#8204;&#1602;&#1575;&#1593;&#1583;&#1607;</h3>
+          <p>&#1575;&#1587;&#1605; &#1605;&#1601;&#1593;&#1608;&#1604; &#1576;&#1607; <code>-t/-d</code> &#1582;&#1578;&#1605; &#1605;&#1740;&#8204;&#1588;&#1608;&#1583; &#8212; &#1592;&#1575;&#1607;&#1585;&#1575;&#1611; &#1576;&#1575;&#1602;&#1575;&#1593;&#1583;&#1607; &#8212; &#1575;&#1605;&#1575; &#1576;&#1606;&#1616; &#1601;&#1593;&#1604; &#1583;&#1585; &#1570;&#1606; &#1578;&#1594;&#1740;&#1740;&#1585; &#1705;&#1585;&#1583;&#1607; &#1575;&#1587;&#1578;&#1563; &#1607;&#1605;&#1740;&#1606; &#1570;&#1606;&#8204;&#1607;&#1575; &#1585;&#1575; &#1575;&#1586; &#1583;&#1587;&#1578;&#1607;&#1620; &#1576;&#1575;&#1602;&#1575;&#1593;&#1583;&#1607; &#1580;&#1583;&#1575; &#1605;&#1740;&#8204;&#1705;&#1606;&#1583; (&#1576;&#1606;&#1616; <code>kopen</code> &#1548; <code>koop</code> &#1575;&#1587;&#1578;&#1548; &#1606;&#1607; <code>koch</code>). &#1575;&#1601;&#1593;&#1575;&#1604; &#1608;&#1580;&#1607;&#1740; (<code>moeten</code>&#1548; <code>mogen</code>&#1548; <code>willen</code>) &#1608; &#1607;&#1605;&#1670;&#1606;&#1740;&#1606; <code>zijn</code> &#1608; <code>hebben</code> &#1583;&#1585; &#1607;&#1605;&#1740;&#1606; &#1583;&#1587;&#1578;&#1607;&#8204;&#1575;&#1606;&#1583;. &#1705;&#1608;&#1670;&#1705;&#8204;&#1578;&#1585;&#1740;&#1606; &#1583;&#1587;&#1578;&#1607; &#1608; &#1607;&#1605;&#1575;&#1606;&#1740; &#1705;&#1607; &#1576;&#1575;&#1740;&#1583; &#1581;&#1601;&#1592; &#1588;&#1608;&#1583;.</p>
+          <p class="ex" dir="ltr">kopen &rarr; gekocht <span class="ovt">(kocht)</span></p>
+        </div>
+      </div>
+    </section>
+  </header>
+</div>
+
+<div class="toolbar">
+  <div class="wrap toolbar-inner">
+    <label class="search">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+        <circle cx="9" cy="9" r="6"/><path d="m13.5 13.5 3.5 3.5" stroke-linecap="round"/>
+      </svg>
+      <input id="q" type="search" placeholder="Search Dutch, Persian or English&hellip;" autocomplete="off" aria-label="Search verbs">
+      <kbd>/</kbd>
+    </label>
+    <div class="filters" role="group" aria-label="Filter by verb type">
+      <button class="chip" data-f="all" data-k="all" aria-pressed="true">Alle</button>
+      <button class="chip" data-f="class" data-k="weak" aria-pressed="false"><span class="dot"></span>Regelmatig</button>
+      <button class="chip" data-f="class" data-k="strong" aria-pressed="false"><span class="dot"></span>Sterk</button>
+      <button class="chip" data-f="class" data-k="irregular" aria-pressed="false"><span class="dot"></span>Onregelmatig</button>
+      <button class="chip" data-f="sep" data-k="sep" aria-pressed="false">Scheidbaar</button>
+    </div>
+    <button class="themetoggle" id="theme" type="button" aria-label="Colour theme"></button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="colhead">
+    <span>#</span>
+    <span>Infinitief</span>
+    <span>Voltooid deelwoord <span class="persons">ik heb &hellip;</span></span>
+    <span>O.V.T. <span class="persons">ik / jij / hij</span></span>
+    <span>O.V.T. <span class="persons">wij / jullie / zij</span></span>
+  </div>
+
+  <main class="sheet" id="sheet"></main>
+
+  <footer>
+    <p>
+      Separable verbs keep their prefix in the participle with <em>-ge-</em> infixed
+      (<em>aangekomen</em>), and are shown split in the O.V.T., the way they appear in a main
+      clause (<em>ik kwam aan</em>). Verbs beginning <em>be-</em>, <em>ver-</em>, <em>ont-</em>
+      or <em>her-</em> take no <em>ge-</em> at all (<em>begonnen</em>, <em>bezocht</em>).
+    </p>
+    <p id="meta"></p>
+  </footer>
+</div>
+
+<script id="data" type="application/json">{"setId":8,"setName":"A2 essentials","generatedAt":"2026-08-30T14:24:38.353Z","count":167,"verbs":[{"n":1,"id":1232,"word":"zijn","translation":"\u0628\u0648\u062f\u0646","partOfSpeech":"verb","definition":"be","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"ben","jij":"bent","hij":"is","wij":"zijn"},"pastSingular":"was","pastPlural":"waren","pastParticiple":"geweest","presentIrregular":true,"separable":false,"class":"irregular","source":"table"},{"n":2,"id":1233,"word":"hebben","translation":"\u062f\u0627\u0634\u062a\u0646","partOfSpeech":"verb","definition":"have","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"heb","jij":"hebt","hij":"heeft","wij":"hebben"},"pastSingular":"had","pastPlural":"hadden","pastParticiple":"gehad","presentIrregular":true,"separable":false,"class":"irregular","source":"table"},{"n":3,"id":1234,"word":"doen","translation":"\u0627\u0646\u062c\u0627\u0645 \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"do","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"doe","jij":"doet","hij":"doet","wij":"doen"},"pastSingular":"deed","pastPlural":"deden","pastParticiple":"gedaan","presentIrregular":true,"separable":false,"class":"strong","source":"table"},{"n":4,"id":1235,"word":"gaan","translation":"\u0631\u0641\u062a\u0646","partOfSpeech":"verb","definition":"go","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"ga","jij":"gaat","hij":"gaat","wij":"gaan"},"pastSingular":"ging","pastPlural":"gingen","pastParticiple":"gegaan","presentIrregular":true,"separable":false,"class":"strong","source":"table"},{"n":5,"id":1236,"word":"komen","translation":"\u0622\u0645\u062f\u0646","partOfSpeech":"verb","definition":"come","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"kom","jij":"komt","hij":"komt","wij":"komen"},"pastSingular":"kwam","pastPlural":"kwamen","pastParticiple":"gekomen","presentIrregular":true,"separable":false,"class":"strong","source":"table"},{"n":6,"id":1237,"word":"kunnen","translation":"\u062a\u0648\u0627\u0646\u0633\u062a\u0646","partOfSpeech":"verb","definition":"can / be able to","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"kan","jij":"kunt","hij":"kan","wij":"kunnen"},"pastSingular":"kon","pastPlural":"konden","pastParticiple":"gekund","presentIrregular":true,"separable":false,"class":"irregular","source":"table"},{"n":7,"id":1238,"word":"moeten","translation":"\u0628\u0627\u06cc\u062f / \u0645\u062c\u0628\u0648\u0631 \u0628\u0648\u062f\u0646","partOfSpeech":"verb","definition":"must / have to","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"moet","jij":"moet","hij":"moet","wij":"moeten"},"pastSingular":"moest","pastPlural":"moesten","pastParticiple":"gemoeten","presentIrregular":false,"separable":false,"class":"irregular","source":"table"},{"n":8,"id":1239,"word":"willen","translation":"\u062e\u0648\u0627\u0633\u062a\u0646","partOfSpeech":"verb","definition":"want","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"wil","jij":"wilt","hij":"wil","wij":"willen"},"pastSingular":"wilde/wou","pastPlural":"wilden/wouden","pastParticiple":"gewild","presentIrregular":true,"separable":false,"class":"irregular","source":"table"},{"n":9,"id":1240,"word":"mogen","translation":"\u0627\u062c\u0627\u0632\u0647 \u062f\u0627\u0634\u062a\u0646","partOfSpeech":"verb","definition":"may / be allowed","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"mag","jij":"mag","hij":"mag","wij":"mogen"},"pastSingular":"mocht","pastPlural":"mochten","pastParticiple":"gemogen","presentIrregular":true,"separable":false,"class":"irregular","source":"table"},{"n":10,"id":1241,"word":"zullen","translation":"\u062e\u0648\u0627\u0647\u0640 / \u067e\u06cc\u0634\u0646\u0647\u0627\u062f \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"will / shall","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"zal","jij":"zult","hij":"zal","wij":"zullen"},"pastSingular":"zou","pastPlural":"zouden","pastParticiple":null,"presentIrregular":true,"separable":false,"class":"irregular","source":"table"},{"n":11,"id":1242,"word":"maken","translation":"\u0633\u0627\u062e\u062a\u0646 / \u0627\u0646\u062c\u0627\u0645 \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"make","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"maak","jij":"maakt","hij":"maakt","wij":"maken"},"pastSingular":"maakte","pastPlural":"maakten","pastParticiple":"gemaakt","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":12,"id":1243,"word":"zeggen","translation":"\u06af\u0641\u062a\u0646","partOfSpeech":"verb","definition":"say","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"zeg","jij":"zegt","hij":"zegt","wij":"zeggen"},"pastSingular":"zei","pastPlural":"zeiden","pastParticiple":"gezegd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":13,"id":1244,"word":"vragen","translation":"\u067e\u0631\u0633\u06cc\u062f\u0646 / \u062f\u0631\u062e\u0648\u0627\u0633\u062a \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"ask","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"vraag","jij":"vraagt","hij":"vraagt","wij":"vragen"},"pastSingular":"vroeg","pastPlural":"vroegen","pastParticiple":"gevraagd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":14,"id":1245,"word":"antwoorden","translation":"\u067e\u0627\u0633\u062e \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"answer","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"antwoord","jij":"antwoordt","hij":"antwoordt","wij":"antwoorden"},"pastSingular":"antwoordde","pastPlural":"antwoordden","pastParticiple":"geantwoord","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":15,"id":1246,"word":"begrijpen","translation":"\u0641\u0647\u0645\u06cc\u062f\u0646","partOfSpeech":"verb","definition":"understand","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"begrijp","jij":"begrijpt","hij":"begrijpt","wij":"begrijpen"},"pastSingular":"begreep","pastPlural":"begrepen","pastParticiple":"begrepen","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":16,"id":1247,"word":"weten","translation":"\u062f\u0627\u0646\u0633\u062a\u0646","partOfSpeech":"verb","definition":"know (fact)","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"weet","jij":"weet","hij":"weet","wij":"weten"},"pastSingular":"wist","pastPlural":"wisten","pastParticiple":"geweten","presentIrregular":false,"separable":false,"class":"irregular","source":"table"},{"n":17,"id":1248,"word":"kennen","translation":"\u0634\u0646\u0627\u062e\u062a\u0646","partOfSpeech":"verb","definition":"know (person/place)","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"ken","jij":"kent","hij":"kent","wij":"kennen"},"pastSingular":"kende","pastPlural":"kenden","pastParticiple":"gekend","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":18,"id":1249,"word":"vinden","translation":"\u067e\u06cc\u062f\u0627 \u06a9\u0631\u062f\u0646 / \u0646\u0638\u0631 \u062f\u0627\u0634\u062a\u0646","partOfSpeech":"verb","definition":"find / think","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"vind","jij":"vindt","hij":"vindt","wij":"vinden"},"pastSingular":"vond","pastPlural":"vonden","pastParticiple":"gevonden","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":19,"id":1250,"word":"geven","translation":"\u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"give","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"geef","jij":"geeft","hij":"geeft","wij":"geven"},"pastSingular":"gaf","pastPlural":"gaven","pastParticiple":"gegeven","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":20,"id":1251,"word":"krijgen","translation":"\u06af\u0631\u0641\u062a\u0646 / \u062f\u0631\u06cc\u0627\u0641\u062a \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"get / receive","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"krijg","jij":"krijgt","hij":"krijgt","wij":"krijgen"},"pastSingular":"kreeg","pastPlural":"kregen","pastParticiple":"gekregen","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":21,"id":1252,"word":"wonen","translation":"\u0633\u0627\u06a9\u0646 \u0628\u0648\u062f\u0646","partOfSpeech":"verb","definition":"live/reside","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"woon","jij":"woont","hij":"woont","wij":"wonen"},"pastSingular":"woonde","pastPlural":"woonden","pastParticiple":"gewoond","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":22,"id":1253,"word":"heten","translation":"\u0646\u0627\u0645 \u062f\u0627\u0634\u062a\u0646","partOfSpeech":"verb","definition":"be called","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"heet","jij":"heet","hij":"heet","wij":"heten"},"pastSingular":"heette","pastPlural":"heetten","pastParticiple":"geheten","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":23,"id":1254,"word":"leven","translation":"\u0632\u0646\u062f\u06af\u06cc \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"live","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"leef","jij":"leeft","hij":"leeft","wij":"leven"},"pastSingular":"leefde","pastPlural":"leefden","pastParticiple":"geleefd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":24,"id":1255,"word":"spreken","translation":"\u0635\u062d\u0628\u062a \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"speak","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"spreek","jij":"spreekt","hij":"spreekt","wij":"spreken"},"pastSingular":"sprak","pastPlural":"spraken","pastParticiple":"gesproken","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":25,"id":1256,"word":"leren","translation":"\u06cc\u0627\u062f \u06af\u0631\u0641\u062a\u0646","partOfSpeech":"verb","definition":"learn","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"leer","jij":"leert","hij":"leert","wij":"leren"},"pastSingular":"leerde","pastPlural":"leerden","pastParticiple":"geleerd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":26,"id":1257,"word":"studeren","translation":"\u062a\u062d\u0635\u06cc\u0644 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"study","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"studeer","jij":"studeert","hij":"studeert","wij":"studeren"},"pastSingular":"studeerde","pastPlural":"studeerden","pastParticiple":"gestudeerd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":27,"id":1258,"word":"trouwen","translation":"\u0627\u0632\u062f\u0648\u0627\u062c \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"marry","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"trouw","jij":"trouwt","hij":"trouwt","wij":"trouwen"},"pastSingular":"trouwde","pastPlural":"trouwden","pastParticiple":"getrouwd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":28,"id":1259,"word":"werken","translation":"\u06a9\u0627\u0631 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"work","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"werk","jij":"werkt","hij":"werkt","wij":"werken"},"pastSingular":"werkte","pastPlural":"werkten","pastParticiple":"gewerkt","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":29,"id":1260,"word":"beginnen","translation":"\u0634\u0631\u0648\u0639 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"begin","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"begin","jij":"begint","hij":"begint","wij":"beginnen"},"pastSingular":"begon","pastPlural":"begonnen","pastParticiple":"begonnen","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":30,"id":1261,"word":"stoppen","translation":"\u0645\u062a\u0648\u0642\u0641 \u0634\u062f\u0646/\u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"stop","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"stop","jij":"stopt","hij":"stopt","wij":"stoppen"},"pastSingular":"stopte","pastPlural":"stopten","pastParticiple":"gestopt","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":31,"id":1262,"word":"helpen","translation":"\u06a9\u0645\u06a9 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"help","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"help","jij":"helpt","hij":"helpt","wij":"helpen"},"pastSingular":"hielp","pastPlural":"hielpen","pastParticiple":"geholpen","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":32,"id":1263,"word":"bellen","translation":"\u062a\u0644\u0641\u0646 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"call","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"bel","jij":"belt","hij":"belt","wij":"bellen"},"pastSingular":"belde","pastPlural":"belden","pastParticiple":"gebeld","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":33,"id":1264,"word":"sturen","translation":"\u0641\u0631\u0633\u062a\u0627\u062f\u0646","partOfSpeech":"verb","definition":"send","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"stuur","jij":"stuurt","hij":"stuurt","wij":"sturen"},"pastSingular":"stuurde","pastPlural":"stuurden","pastParticiple":"gestuurd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":34,"id":1265,"word":"ontvangen","translation":"\u062f\u0631\u06cc\u0627\u0641\u062a \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"receive","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"ontvang","jij":"ontvangt","hij":"ontvangt","wij":"ontvangen"},"pastSingular":"ontving","pastPlural":"ontvingen","pastParticiple":"ontvangen","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":35,"id":1266,"word":"invullen","translation":"\u067e\u0631 \u06a9\u0631\u062f\u0646 \u0641\u0631\u0645","partOfSpeech":"verb","definition":"fill in","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"vul in","jij":"vult in","hij":"vult in","wij":"vullen in"},"pastSingular":"vulde in","pastPlural":"vulden in","pastParticiple":"ingevuld","presentIrregular":false,"separable":true,"class":"weak","source":"stored"},{"n":36,"id":1267,"word":"afspreken","translation":"\u0642\u0631\u0627\u0631 \u06af\u0630\u0627\u0634\u062a\u0646","partOfSpeech":"verb","definition":"arrange/meet","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"spreek af","jij":"spreekt af","hij":"spreekt af","wij":"spreken af"},"pastSingular":"sprak af","pastPlural":"spraken af","pastParticiple":"afgesproken","presentIrregular":false,"separable":true,"class":"strong","source":"table"},{"n":37,"id":1268,"word":"uitleggen","translation":"\u062a\u0648\u0636\u06cc\u062d \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"explain","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"leg uit","jij":"legt uit","hij":"legt uit","wij":"leggen uit"},"pastSingular":"legde uit","pastPlural":"legden uit","pastParticiple":"uitgelegd","presentIrregular":false,"separable":true,"class":"weak","source":"table"},{"n":38,"id":1269,"word":"kopen","translation":"\u062e\u0631\u06cc\u062f\u0646","partOfSpeech":"verb","definition":"buy","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"koop","jij":"koopt","hij":"koopt","wij":"kopen"},"pastSingular":"kocht","pastPlural":"kochten","pastParticiple":"gekocht","presentIrregular":false,"separable":false,"class":"irregular","source":"table"},{"n":39,"id":1270,"word":"betalen","translation":"\u067e\u0631\u062f\u0627\u062e\u062a \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"pay","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"betaal","jij":"betaalt","hij":"betaalt","wij":"betalen"},"pastSingular":"betaalde","pastPlural":"betaalden","pastParticiple":"betaald","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":40,"id":1271,"word":"kosten","translation":"\u0642\u06cc\u0645\u062a \u062f\u0627\u0634\u062a\u0646","partOfSpeech":"verb","definition":"cost","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"kost","jij":"kost","hij":"kost","wij":"kosten"},"pastSingular":"kostte","pastPlural":"kostten","pastParticiple":"gekost","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":41,"id":1272,"word":"zoeken","translation":"\u062f\u0646\u0628\u0627\u0644 \u06af\u0634\u062a\u0646","partOfSpeech":"verb","definition":"look for","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"zoek","jij":"zoekt","hij":"zoekt","wij":"zoeken"},"pastSingular":"zocht","pastPlural":"zochten","pastParticiple":"gezocht","presentIrregular":false,"separable":false,"class":"irregular","source":"table"},{"n":42,"id":1273,"word":"passen","translation":"\u0627\u0646\u062f\u0627\u0632\u0647 \u0628\u0648\u062f\u0646 / \u067e\u0631\u0648 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"fit / try on","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"pas","jij":"past","hij":"past","wij":"passen"},"pastSingular":"paste","pastPlural":"pasten","pastParticiple":"gepast","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":43,"id":1274,"word":"ruilen","translation":"\u062a\u0639\u0648\u06cc\u0636 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"exchange","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"ruil","jij":"ruilt","hij":"ruilt","wij":"ruilen"},"pastSingular":"ruilde","pastPlural":"ruilden","pastParticiple":"geruild","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":44,"id":1275,"word":"eten","translation":"\u062e\u0648\u0631\u062f\u0646","partOfSpeech":"verb","definition":"eat","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"eet","jij":"eet","hij":"eet","wij":"eten"},"pastSingular":"at","pastPlural":"aten","pastParticiple":"gegeten","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":45,"id":1276,"word":"drinken","translation":"\u0646\u0648\u0634\u06cc\u062f\u0646","partOfSpeech":"verb","definition":"drink","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"drink","jij":"drinkt","hij":"drinkt","wij":"drinken"},"pastSingular":"dronk","pastPlural":"dronken","pastParticiple":"gedronken","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":46,"id":1277,"word":"voelen","translation":"\u0627\u062d\u0633\u0627\u0633 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"feel","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"voel","jij":"voelt","hij":"voelt","wij":"voelen"},"pastSingular":"voelde","pastPlural":"voelden","pastParticiple":"gevoeld","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":47,"id":1278,"word":"gebruiken","translation":"\u0627\u0633\u062a\u0641\u0627\u062f\u0647 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"use","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"gebruik","jij":"gebruikt","hij":"gebruikt","wij":"gebruiken"},"pastSingular":"gebruikte","pastPlural":"gebruikten","pastParticiple":"gebruikt","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":48,"id":1279,"word":"slapen","translation":"\u062e\u0648\u0627\u0628\u06cc\u062f\u0646","partOfSpeech":"verb","definition":"sleep","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"slaap","jij":"slaapt","hij":"slaapt","wij":"slapen"},"pastSingular":"sliep","pastPlural":"sliepen","pastParticiple":"geslapen","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":49,"id":1280,"word":"blijven","translation":"\u0645\u0627\u0646\u062f\u0646","partOfSpeech":"verb","definition":"stay","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"blijf","jij":"blijft","hij":"blijft","wij":"blijven"},"pastSingular":"bleef","pastPlural":"bleven","pastParticiple":"gebleven","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":50,"id":1281,"word":"reizen","translation":"\u0633\u0641\u0631 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"travel","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"reis","jij":"reist","hij":"reist","wij":"reizen"},"pastSingular":"reisde","pastPlural":"reisden","pastParticiple":"gereisd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":51,"id":1282,"word":"rijden","translation":"\u0631\u0627\u0646\u0646\u062f\u06af\u06cc \u06a9\u0631\u062f\u0646 / \u062d\u0631\u06a9\u062a \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"drive/ride","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"rijd","jij":"rijdt","hij":"rijdt","wij":"rijden"},"pastSingular":"reed","pastPlural":"reden","pastParticiple":"gereden","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":52,"id":1283,"word":"lopen","translation":"\u0631\u0627\u0647 \u0631\u0641\u062a\u0646","partOfSpeech":"verb","definition":"walk","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"loop","jij":"loopt","hij":"loopt","wij":"lopen"},"pastSingular":"liep","pastPlural":"liepen","pastParticiple":"gelopen","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":53,"id":1284,"word":"vertrekken","translation":"\u062d\u0631\u06a9\u062a \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"depart","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"vertrek","jij":"vertrekt","hij":"vertrekt","wij":"vertrekken"},"pastSingular":"vertrok","pastPlural":"vertrokken","pastParticiple":"vertrokken","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":54,"id":1285,"word":"aankomen","translation":"\u0631\u0633\u06cc\u062f\u0646","partOfSpeech":"verb","definition":"arrive","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"kom aan","jij":"komt aan","hij":"komt aan","wij":"komen aan"},"pastSingular":"kwam aan","pastPlural":"kwamen aan","pastParticiple":"aangekomen","presentIrregular":true,"separable":true,"class":"strong","source":"table"},{"n":55,"id":1286,"word":"wachten","translation":"\u0645\u0646\u062a\u0638\u0631 \u0645\u0627\u0646\u062f\u0646","partOfSpeech":"verb","definition":"wait","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"wacht","jij":"wacht","hij":"wacht","wij":"wachten"},"pastSingular":"wachtte","pastPlural":"wachtten","pastParticiple":"gewacht","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":56,"id":1287,"word":"huren","translation":"\u0627\u062c\u0627\u0631\u0647 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"rent","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"huur","jij":"huurt","hij":"huurt","wij":"huren"},"pastSingular":"huurde","pastPlural":"huurden","pastParticiple":"gehuurd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":57,"id":1288,"word":"verhuizen","translation":"\u0627\u0633\u0628\u0627\u0628\u200c\u06a9\u0634\u06cc \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"move house","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"verhuis","jij":"verhuist","hij":"verhuist","wij":"verhuizen"},"pastSingular":"verhuisde","pastPlural":"verhuisden","pastParticiple":"verhuisd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":58,"id":1289,"word":"openen","translation":"\u0628\u0627\u0632 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"open","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"open","jij":"opent","hij":"opent","wij":"openen"},"pastSingular":"opende","pastPlural":"openden","pastParticiple":"geopend","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":59,"id":1290,"word":"sluiten","translation":"\u0628\u0633\u062a\u0646","partOfSpeech":"verb","definition":"close","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"sluit","jij":"sluit","hij":"sluit","wij":"sluiten"},"pastSingular":"sloot","pastPlural":"sloten","pastParticiple":"gesloten","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":60,"id":1291,"word":"schoonmaken","translation":"\u062a\u0645\u06cc\u0632 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"clean","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"maak schoon","jij":"maakt schoon","hij":"maakt schoon","wij":"maken schoon"},"pastSingular":"maakte schoon","pastPlural":"maakten schoon","pastParticiple":"schoongemaakt","presentIrregular":false,"separable":true,"class":"weak","source":"table"},{"n":61,"id":1292,"word":"sporten","translation":"\u0648\u0631\u0632\u0634 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"exercise","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"sport","jij":"sport","hij":"sport","wij":"sporten"},"pastSingular":"sportte","pastPlural":"sportten","pastParticiple":"gesport","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":62,"id":1293,"word":"lezen","translation":"\u062e\u0648\u0627\u0646\u062f\u0646","partOfSpeech":"verb","definition":"read","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"lees","jij":"leest","hij":"leest","wij":"lezen"},"pastSingular":"las","pastPlural":"lazen","pastParticiple":"gelezen","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":63,"id":1294,"word":"kijken","translation":"\u062f\u06cc\u062f\u0646 / \u0646\u06af\u0627\u0647 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"watch/look","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"kijk","jij":"kijkt","hij":"kijkt","wij":"kijken"},"pastSingular":"keek","pastPlural":"keken","pastParticiple":"gekeken","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":64,"id":1295,"word":"luisteren","translation":"\u06af\u0648\u0634 \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"listen","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"luister","jij":"luistert","hij":"luistert","wij":"luisteren"},"pastSingular":"luisterde","pastPlural":"luisterden","pastParticiple":"geluisterd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":65,"id":1296,"word":"zien","translation":"\u062f\u06cc\u062f\u0646","partOfSpeech":"verb","definition":"see","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"zie","jij":"ziet","hij":"ziet","wij":"zien"},"pastSingular":"zag","pastPlural":"zagen","pastParticiple":"gezien","presentIrregular":true,"separable":false,"class":"strong","source":"table"},{"n":66,"id":1297,"word":"horen","translation":"\u0634\u0646\u06cc\u062f\u0646","partOfSpeech":"verb","definition":"hear","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"hoor","jij":"hoort","hij":"hoort","wij":"horen"},"pastSingular":"hoorde","pastPlural":"hoorden","pastParticiple":"gehoord","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":67,"id":1298,"word":"zitten","translation":"\u0646\u0634\u0633\u062a\u0646","partOfSpeech":"verb","definition":"sit","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"zit","jij":"zit","hij":"zit","wij":"zitten"},"pastSingular":"zat","pastPlural":"zaten","pastParticiple":"gezeten","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":68,"id":1299,"word":"staan","translation":"\u0627\u06cc\u0633\u062a\u0627\u062f\u0646","partOfSpeech":"verb","definition":"stand","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"sta","jij":"staat","hij":"staat","wij":"staan"},"pastSingular":"stond","pastPlural":"stonden","pastParticiple":"gestaan","presentIrregular":true,"separable":false,"class":"strong","source":"table"},{"n":69,"id":1300,"word":"liggen","translation":"\u062f\u0631\u0627\u0632 \u06a9\u0634\u06cc\u062f\u0646 / \u0642\u0631\u0627\u0631 \u062f\u0627\u0634\u062a\u0646","partOfSpeech":"verb","definition":"lie (down)","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"lig","jij":"ligt","hij":"ligt","wij":"liggen"},"pastSingular":"lag","pastPlural":"lagen","pastParticiple":"gelegen","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":70,"id":1301,"word":"dragen","translation":"\u067e\u0648\u0634\u06cc\u062f\u0646 / \u062d\u0645\u0644 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"wear / carry","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"draag","jij":"draagt","hij":"draagt","wij":"dragen"},"pastSingular":"droeg","pastPlural":"droegen","pastParticiple":"gedragen","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":71,"id":1302,"word":"spelen","translation":"\u0628\u0627\u0632\u06cc \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"play","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"speel","jij":"speelt","hij":"speelt","wij":"spelen"},"pastSingular":"speelde","pastPlural":"speelden","pastParticiple":"gespeeld","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":72,"id":1303,"word":"praten","translation":"\u0635\u062d\u0628\u062a \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"talk","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"praat","jij":"praat","hij":"praat","wij":"praten"},"pastSingular":"praatte","pastPlural":"praatten","pastParticiple":"gepraat","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":73,"id":1304,"word":"houden van","translation":"\u062f\u0648\u0633\u062a \u062f\u0627\u0634\u062a\u0646","partOfSpeech":"verb","definition":"love / like","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"houd van","jij":"houdt van","hij":"houdt van","wij":"houden van"},"pastSingular":"hield van","pastPlural":"hielden van","pastParticiple":"gehouden van","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":74,"id":1305,"word":"denken","translation":"\u0641\u06a9\u0631 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"think","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"denk","jij":"denkt","hij":"denkt","wij":"denken"},"pastSingular":"dacht","pastPlural":"dachten","pastParticiple":"gedacht","presentIrregular":false,"separable":false,"class":"irregular","source":"table"},{"n":75,"id":1306,"word":"hopen","translation":"\u0627\u0645\u06cc\u062f\u0648\u0627\u0631 \u0628\u0648\u062f\u0646","partOfSpeech":"verb","definition":"hope","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"hoop","jij":"hoopt","hij":"hoopt","wij":"hopen"},"pastSingular":"hoopte","pastPlural":"hoopten","pastParticiple":"gehoopt","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":76,"id":1307,"word":"hoeven","translation":"\u0644\u0627\u0632\u0645 \u0646\u0628\u0648\u062f\u0646","partOfSpeech":"verb","definition":"need not (with niet/geen)","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"hoef","jij":"hoeft","hij":"hoeft","wij":"hoeven"},"pastSingular":"hoefde","pastPlural":"hoefden","pastParticiple":"gehoeven","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":77,"id":1308,"word":"betekenen","translation":"\u0645\u0639\u0646\u06cc \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"mean","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"beteken","jij":"betekent","hij":"betekent","wij":"betekenen"},"pastSingular":"betekende","pastPlural":"betekenden","pastParticiple":"betekend","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":78,"id":1309,"word":"reageren","translation":"\u067e\u0627\u0633\u062e \u062f\u0627\u062f\u0646 / \u0648\u0627\u06a9\u0646\u0634 \u0646\u0634\u0627\u0646 \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"respond / react","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"reageer","jij":"reageert","hij":"reageert","wij":"reageren"},"pastSingular":"reageerde","pastPlural":"reageerden","pastParticiple":"gereageerd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":79,"id":1464,"word":"brengen","translation":"\u0622\u0648\u0631\u062f\u0646","partOfSpeech":"verb","definition":"bring","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"breng","jij":"brengt","hij":"brengt","wij":"brengen"},"pastSingular":"bracht","pastPlural":"brachten","pastParticiple":"gebracht","presentIrregular":false,"separable":false,"class":"irregular","source":"table"},{"n":80,"id":1465,"word":"halen","translation":"\u06af\u0631\u0641\u062a\u0646 / \u0622\u0648\u0631\u062f\u0646","partOfSpeech":"verb","definition":"pick up / get","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"haal","jij":"haalt","hij":"haalt","wij":"halen"},"pastSingular":"haalde","pastPlural":"haalden","pastParticiple":"gehaald","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":81,"id":1466,"word":"meenemen","translation":"\u0647\u0645\u0631\u0627\u0647 \u0628\u0631\u062f\u0646","partOfSpeech":"verb","definition":"take along","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"neem mee","jij":"neemt mee","hij":"neemt mee","wij":"nemen mee"},"pastSingular":"nam mee","pastPlural":"namen mee","pastParticiple":"meegenomen","presentIrregular":false,"separable":true,"class":"strong","source":"table"},{"n":82,"id":1467,"word":"vergeten","translation":"\u0641\u0631\u0627\u0645\u0648\u0634 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"forget","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"vergeet","jij":"vergeet","hij":"vergeet","wij":"vergeten"},"pastSingular":"vergat","pastPlural":"vergaten","pastParticiple":"vergeten","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":83,"id":1468,"word":"onthouden","translation":"\u0628\u0647 \u062e\u0627\u0637\u0631 \u0633\u067e\u0631\u062f\u0646","partOfSpeech":"verb","definition":"remember","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"onthoud","jij":"onthoudt","hij":"onthoudt","wij":"onthouden"},"pastSingular":"onthield","pastPlural":"onthielden","pastParticiple":"onthouden","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":84,"id":1469,"word":"herhalen","translation":"\u062a\u06a9\u0631\u0627\u0631 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"repeat","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"herhaal","jij":"herhaalt","hij":"herhaalt","wij":"herhalen"},"pastSingular":"herhaalde","pastPlural":"herhaalden","pastParticiple":"herhaald","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":85,"id":1470,"word":"schrijven","translation":"\u0646\u0648\u0634\u062a\u0646","partOfSpeech":"verb","definition":"write","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"schrijf","jij":"schrijft","hij":"schrijft","wij":"schrijven"},"pastSingular":"schreef","pastPlural":"schreven","pastParticiple":"geschreven","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":86,"id":1471,"word":"opschrijven","translation":"\u06cc\u0627\u062f\u062f\u0627\u0634\u062a \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"write down","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"schrijf op","jij":"schrijft op","hij":"schrijft op","wij":"schrijven op"},"pastSingular":"schreef op","pastPlural":"schreven op","pastParticiple":"opgeschreven","presentIrregular":false,"separable":true,"class":"strong","source":"table"},{"n":87,"id":1472,"word":"vertellen","translation":"\u062a\u0639\u0631\u06cc\u0641 \u06a9\u0631\u062f\u0646 / \u06af\u0641\u062a\u0646","partOfSpeech":"verb","definition":"tell","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"vertel","jij":"vertelt","hij":"vertelt","wij":"vertellen"},"pastSingular":"vertelde","pastPlural":"vertelden","pastParticiple":"verteld","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":88,"id":1473,"word":"beschrijven","translation":"\u062a\u0648\u0635\u06cc\u0641 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"describe","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"beschrijf","jij":"beschrijft","hij":"beschrijft","wij":"beschrijven"},"pastSingular":"beschreef","pastPlural":"beschreven","pastParticiple":"beschreven","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":89,"id":1474,"word":"bedoelen","translation":"\u0645\u0646\u0638\u0648\u0631 \u062f\u0627\u0634\u062a\u0646","partOfSpeech":"verb","definition":"mean","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"bedoel","jij":"bedoelt","hij":"bedoelt","wij":"bedoelen"},"pastSingular":"bedoelde","pastPlural":"bedoelden","pastParticiple":"bedoeld","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":90,"id":1475,"word":"kiezen","translation":"\u0627\u0646\u062a\u062e\u0627\u0628 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"choose","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"kies","jij":"kiest","hij":"kiest","wij":"kiezen"},"pastSingular":"koos","pastPlural":"kozen","pastParticiple":"gekozen","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":91,"id":1476,"word":"beslissen","translation":"\u062a\u0635\u0645\u06cc\u0645 \u06af\u0631\u0641\u062a\u0646","partOfSpeech":"verb","definition":"decide","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"beslis","jij":"beslist","hij":"beslist","wij":"beslissen"},"pastSingular":"besliste","pastPlural":"beslisten","pastParticiple":"beslist","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":92,"id":1477,"word":"proberen","translation":"\u0627\u0645\u062a\u062d\u0627\u0646 \u06a9\u0631\u062f\u0646 / \u062a\u0644\u0627\u0634 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"try","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"probeer","jij":"probeert","hij":"probeert","wij":"proberen"},"pastSingular":"probeerde","pastPlural":"probeerden","pastParticiple":"geprobeerd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":93,"id":1478,"word":"regelen","translation":"\u062a\u0631\u062a\u06cc\u0628 \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"arrange","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"regel","jij":"regelt","hij":"regelt","wij":"regelen"},"pastSingular":"regelde","pastPlural":"regelden","pastParticiple":"geregeld","presentIrregular":false,"separable":false,"class":"weak","source":"stored"},{"n":94,"id":1479,"word":"reserveren","translation":"\u0631\u0632\u0631\u0648 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"reserve","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"reserveer","jij":"reserveert","hij":"reserveert","wij":"reserveren"},"pastSingular":"reserveerde","pastPlural":"reserveerden","pastParticiple":"gereserveerd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":95,"id":1480,"word":"annuleren","translation":"\u0644\u063a\u0648 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"cancel","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"annuleer","jij":"annuleert","hij":"annuleert","wij":"annuleren"},"pastSingular":"annuleerde","pastPlural":"annuleerden","pastParticiple":"geannuleerd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":96,"id":1481,"word":"veranderen","translation":"\u062a\u063a\u06cc\u06cc\u0631 \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"change","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"verander","jij":"verandert","hij":"verandert","wij":"veranderen"},"pastSingular":"veranderde","pastPlural":"veranderden","pastParticiple":"veranderd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":97,"id":1482,"word":"controleren","translation":"\u0628\u0631\u0631\u0633\u06cc \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"check","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"controleer","jij":"controleert","hij":"controleert","wij":"controleren"},"pastSingular":"controleerde","pastPlural":"controleerden","pastParticiple":"gecontroleerd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":98,"id":1483,"word":"ondertekenen","translation":"\u0627\u0645\u0636\u0627 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"sign","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"onderteken","jij":"ondertekent","hij":"ondertekent","wij":"ondertekenen"},"pastSingular":"ondertekende","pastPlural":"ondertekenden","pastParticiple":"ondertekend","presentIrregular":false,"separable":false,"class":"weak","source":"stored"},{"n":99,"id":1484,"word":"aanvragen","translation":"\u062f\u0631\u062e\u0648\u0627\u0633\u062a \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"apply for / request","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"vraag aan","jij":"vraagt aan","hij":"vraagt aan","wij":"vragen aan"},"pastSingular":"vroeg aan","pastPlural":"vroegen aan","pastParticiple":"aangevraagd","presentIrregular":false,"separable":true,"class":"weak","source":"stored"},{"n":100,"id":1485,"word":"ophalen","translation":"\u062a\u062d\u0648\u06cc\u0644 \u06af\u0631\u0641\u062a\u0646","partOfSpeech":"verb","definition":"pick up / collect","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"haal op","jij":"haalt op","hij":"haalt op","wij":"halen op"},"pastSingular":"haalde op","pastPlural":"haalden op","pastParticiple":"opgehaald","presentIrregular":false,"separable":true,"class":"weak","source":"table"},{"n":101,"id":1486,"word":"afzeggen","translation":"\u06a9\u0646\u0633\u0644 \u06a9\u0631\u062f\u0646 \u0642\u0631\u0627\u0631","partOfSpeech":"verb","definition":"cancel an appointment","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"zeg af","jij":"zegt af","hij":"zegt af","wij":"zeggen af"},"pastSingular":"zei af","pastPlural":"zeiden af","pastParticiple":"afgezegd","presentIrregular":false,"separable":true,"class":"weak","source":"stored"},{"n":102,"id":1487,"word":"doorgeven","translation":"\u0627\u0637\u0644\u0627\u0639 \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"pass on / report","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"geef door","jij":"geeft door","hij":"geeft door","wij":"geven door"},"pastSingular":"gaf door","pastPlural":"gaven door","pastParticiple":"doorgegeven","presentIrregular":false,"separable":true,"class":"strong","source":"table"},{"n":103,"id":1488,"word":"aanmelden","translation":"\u062b\u0628\u062a\u200c\u0646\u0627\u0645 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"register","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"meld aan","jij":"meldt aan","hij":"meldt aan","wij":"melden aan"},"pastSingular":"meldde aan","pastPlural":"meldden aan","pastParticiple":"aangemeld","presentIrregular":false,"separable":true,"class":"weak","source":"stored"},{"n":104,"id":1489,"word":"afmelden","translation":"\u0644\u063a\u0648 \u062b\u0628\u062a\u200c\u0646\u0627\u0645 / \u0627\u0639\u0644\u0627\u0645 \u063a\u06cc\u0628\u062a","partOfSpeech":"verb","definition":"unsubscribe / report absence","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"meld af","jij":"meldt af","hij":"meldt af","wij":"melden af"},"pastSingular":"meldde af","pastPlural":"meldden af","pastParticiple":"afgemeld","presentIrregular":false,"separable":true,"class":"weak","source":"stored"},{"n":105,"id":1490,"word":"lenen","translation":"\u0642\u0631\u0636 \u06af\u0631\u0641\u062a\u0646 / \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"borrow / lend","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"leen","jij":"leent","hij":"leent","wij":"lenen"},"pastSingular":"leende","pastPlural":"leenden","pastParticiple":"geleend","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":106,"id":1491,"word":"sparen","translation":"\u067e\u0633\u200c\u0627\u0646\u062f\u0627\u0632 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"save money","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"spaar","jij":"spaart","hij":"spaart","wij":"sparen"},"pastSingular":"spaarde","pastPlural":"spaarden","pastParticiple":"gespaard","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":107,"id":1492,"word":"bestellen","translation":"\u0633\u0641\u0627\u0631\u0634 \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"order","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"bestel","jij":"bestelt","hij":"bestelt","wij":"bestellen"},"pastSingular":"bestelde","pastPlural":"bestelden","pastParticiple":"besteld","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":108,"id":1493,"word":"bezorgen","translation":"\u062a\u062d\u0648\u06cc\u0644 \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"deliver","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"bezorg","jij":"bezorgt","hij":"bezorgt","wij":"bezorgen"},"pastSingular":"bezorgde","pastPlural":"bezorgden","pastParticiple":"bezorgd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":109,"id":1494,"word":"terugbrengen","translation":"\u067e\u0633 \u0622\u0648\u0631\u062f\u0646","partOfSpeech":"verb","definition":"return / bring back","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"breng terug","jij":"brengt terug","hij":"brengt terug","wij":"brengen terug"},"pastSingular":"bracht terug","pastPlural":"brachten terug","pastParticiple":"teruggebracht","presentIrregular":false,"separable":true,"class":"irregular","source":"stored"},{"n":110,"id":1495,"word":"repareren","translation":"\u062a\u0639\u0645\u06cc\u0631 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"repair","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"repareer","jij":"repareert","hij":"repareert","wij":"repareren"},"pastSingular":"repareerde","pastPlural":"repareerden","pastParticiple":"gerepareerd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":111,"id":1496,"word":"breken","translation":"\u0634\u06a9\u0633\u062a\u0646","partOfSpeech":"verb","definition":"break","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"breek","jij":"breekt","hij":"breekt","wij":"breken"},"pastSingular":"brak","pastPlural":"braken","pastParticiple":"gebroken","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":112,"id":1497,"word":"wassen","translation":"\u0634\u0633\u062a\u0646","partOfSpeech":"verb","definition":"wash","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"was","jij":"wast","hij":"wast","wij":"wassen"},"pastSingular":"waste","pastPlural":"wasten","pastParticiple":"gewassen","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":113,"id":1498,"word":"koken","translation":"\u0622\u0634\u067e\u0632\u06cc \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"cook","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"kook","jij":"kookt","hij":"kookt","wij":"koken"},"pastSingular":"kookte","pastPlural":"kookten","pastParticiple":"gekookt","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":114,"id":1499,"word":"bakken","translation":"\u067e\u062e\u062a\u0646","partOfSpeech":"verb","definition":"bake / fry","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"bak","jij":"bakt","hij":"bakt","wij":"bakken"},"pastSingular":"bakte","pastPlural":"bakten","pastParticiple":"gebakken","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":115,"id":1500,"word":"snijden","translation":"\u0628\u0631\u06cc\u062f\u0646","partOfSpeech":"verb","definition":"cut","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"snijd","jij":"snijdt","hij":"snijdt","wij":"snijden"},"pastSingular":"sneed","pastPlural":"sneden","pastParticiple":"gesneden","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":116,"id":1501,"word":"vallen","translation":"\u0627\u0641\u062a\u0627\u062f\u0646","partOfSpeech":"verb","definition":"fall","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"val","jij":"valt","hij":"valt","wij":"vallen"},"pastSingular":"viel","pastPlural":"vielen","pastParticiple":"gevallen","presentIrregular":false,"separable":false,"class":"strong","source":"table"},{"n":117,"id":1502,"word":"gebeuren","translation":"\u0627\u062a\u0641\u0627\u0642 \u0627\u0641\u062a\u0627\u062f\u0646","partOfSpeech":"verb","definition":"happen","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"gebeur","jij":"gebeurt","hij":"gebeurt","wij":"gebeuren"},"pastSingular":"gebeurde","pastPlural":"gebeurden","pastParticiple":"gebeurd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":118,"id":1503,"word":"missen","translation":"\u0627\u0632 \u062f\u0633\u062a \u062f\u0627\u062f\u0646 / \u062f\u0644\u062a\u0646\u06af \u0634\u062f\u0646","partOfSpeech":"verb","definition":"miss","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"mis","jij":"mist","hij":"mist","wij":"missen"},"pastSingular":"miste","pastPlural":"misten","pastParticiple":"gemist","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":119,"id":1504,"word":"verdwalen","translation":"\u06af\u0645 \u0634\u062f\u0646","partOfSpeech":"verb","definition":"get lost","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"verdwaal","jij":"verdwaalt","hij":"verdwaalt","wij":"verdwalen"},"pastSingular":"verdwaalde","pastPlural":"verdwaalden","pastParticiple":"verdwaald","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":120,"id":1505,"word":"bezoeken","translation":"\u0628\u0627\u0632\u062f\u06cc\u062f \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"visit","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"bezoek","jij":"bezoekt","hij":"bezoekt","wij":"bezoeken"},"pastSingular":"bezocht","pastPlural":"bezochten","pastParticiple":"bezocht","presentIrregular":false,"separable":false,"class":"irregular","source":"table"},{"n":121,"id":1506,"word":"uitnodigen","translation":"\u062f\u0639\u0648\u062a \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"invite","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"nodig uit","jij":"nodigt uit","hij":"nodigt uit","wij":"nodigen uit"},"pastSingular":"nodigde uit","pastPlural":"nodigden uit","pastParticiple":"uitgenodigd","presentIrregular":false,"separable":true,"class":"weak","source":"stored"},{"n":122,"id":1507,"word":"feliciteren","translation":"\u062a\u0628\u0631\u06cc\u06a9 \u06af\u0641\u062a\u0646","partOfSpeech":"verb","definition":"congratulate","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"feliciteer","jij":"feliciteert","hij":"feliciteert","wij":"feliciteren"},"pastSingular":"feliciteerde","pastPlural":"feliciteerden","pastParticiple":"gefeliciteerd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":123,"id":1508,"word":"klagen","translation":"\u0634\u06a9\u0627\u06cc\u062a \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"complain","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"klaag","jij":"klaagt","hij":"klaagt","wij":"klagen"},"pastSingular":"klaagde","pastPlural":"klaagden","pastParticiple":"geklaagd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":124,"id":1509,"word":"doorsturen","translation":"\u0641\u0648\u0631\u0648\u0627\u0631\u062f \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"forward","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"stuur door","jij":"stuurt door","hij":"stuurt door","wij":"sturen door"},"pastSingular":"stuurde door","pastPlural":"stuurden door","pastParticiple":"doorgestuurd","presentIrregular":false,"separable":true,"class":"weak","source":"stored"},{"n":125,"id":1510,"word":"opslaan","translation":"\u0630\u062e\u06cc\u0631\u0647 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"save","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"sla op","jij":"slaat op","hij":"slaat op","wij":"slaan op"},"pastSingular":"sloeg op","pastPlural":"sloegen op","pastParticiple":"opgeslagen","presentIrregular":true,"separable":true,"class":"strong","source":"table"},{"n":126,"id":1513,"word":"regenen","translation":"\u0628\u0627\u0631\u0627\u0646 \u0628\u0627\u0631\u06cc\u062f\u0646","partOfSpeech":"verb","definition":"rain (verb)","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"regen","jij":"regent","hij":"regent","wij":"regenen"},"pastSingular":"regende","pastPlural":"regenden","pastParticiple":"geregend","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":127,"id":1537,"word":"hoesten","translation":"\u0633\u0631\u0641\u0647 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"cough","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"hoest","jij":"hoest","hij":"hoest","wij":"hoesten"},"pastSingular":"hoestte","pastPlural":"hoestten","pastParticiple":"gehoest","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":128,"id":1548,"word":"solliciteren","translation":"\u062f\u0631\u062e\u0648\u0627\u0633\u062a \u0634\u063a\u0644 \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"apply for a job","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"solliciteer","jij":"solliciteert","hij":"solliciteert","wij":"solliciteren"},"pastSingular":"solliciteerde","pastPlural":"solliciteerden","pastParticiple":"gesolliciteerd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":129,"id":1549,"word":"verdienen","translation":"\u062f\u0631\u0622\u0645\u062f \u062f\u0627\u0634\u062a\u0646","partOfSpeech":"verb","definition":"earn","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"verdien","jij":"verdient","hij":"verdient","wij":"verdienen"},"pastSingular":"verdiende","pastPlural":"verdienden","pastParticiple":"verdiend","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":130,"id":1599,"word":"overstappen","translation":"\u062e\u0637 \u0639\u0648\u0636 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"transfer","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"stap over","jij":"stapt over","hij":"stapt over","wij":"stappen over"},"pastSingular":"stapte over","pastPlural":"stapten over","pastParticiple":"overgestapt","presentIrregular":false,"separable":true,"class":"weak","source":"stored"},{"n":131,"id":1600,"word":"parkeren","translation":"\u067e\u0627\u0631\u06a9 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"park","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"parkeer","jij":"parkeert","hij":"parkeert","wij":"parkeren"},"pastSingular":"parkeerde","pastPlural":"parkeerden","pastParticiple":"geparkeerd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":132,"id":1601,"word":"fietsen","translation":"\u062f\u0648\u0686\u0631\u062e\u0647\u200c\u0633\u0648\u0627\u0631\u06cc \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"cycle","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"fiets","jij":"fietst","hij":"fietst","wij":"fietsen"},"pastSingular":"fietste","pastPlural":"fietsten","pastParticiple":"gefietst","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":133,"id":1603,"word":"instappen","translation":"\u0633\u0648\u0627\u0631 \u0634\u062f\u0646","partOfSpeech":"verb","definition":"get on (bus/train)","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"stap in","jij":"stapt in","hij":"stapt in","wij":"stappen in"},"pastSingular":"stapte in","pastPlural":"stapten in","pastParticiple":"ingestapt","presentIrregular":false,"separable":true,"class":"weak","source":"table"},{"n":134,"id":1604,"word":"uitstappen","translation":"\u067e\u06cc\u0627\u062f\u0647 \u0634\u062f\u0646","partOfSpeech":"verb","definition":"get off (bus/train)","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"stap uit","jij":"stapt uit","hij":"stapt uit","wij":"stappen uit"},"pastSingular":"stapte uit","pastPlural":"stapten uit","pastParticiple":"uitgestapt","presentIrregular":false,"separable":true,"class":"weak","source":"table"},{"n":135,"id":1621,"word":"pinnen","translation":"\u0628\u0627 \u06a9\u0627\u0631\u062a \u067e\u0631\u062f\u0627\u062e\u062a \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"pay by card","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"pin","jij":"pint","hij":"pint","wij":"pinnen"},"pastSingular":"pinde","pastPlural":"pinden","pastParticiple":"gepind","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":136,"id":1622,"word":"overmaken","translation":"\u0627\u0646\u062a\u0642\u0627\u0644 \u062f\u0627\u062f\u0646 (\u067e\u0648\u0644)","partOfSpeech":"verb","definition":"transfer (money)","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"maak over","jij":"maakt over","hij":"maakt over","wij":"maken over"},"pastSingular":"maakte over","pastPlural":"maakten over","pastParticiple":"overgemaakt","presentIrregular":false,"separable":true,"class":"weak","source":"stored"},{"n":137,"id":1639,"word":"verlengen","translation":"\u062a\u0645\u062f\u06cc\u062f \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"renew / extend","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"verleng","jij":"verlengt","hij":"verlengt","wij":"verlengen"},"pastSingular":"verlengde","pastPlural":"verlengden","pastParticiple":"verlengd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":138,"id":1671,"word":"ontmoeten","translation":"\u0645\u0644\u0627\u0642\u0627\u062a \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"meet (someone)","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"ontmoet","jij":"ontmoet","hij":"ontmoet","wij":"ontmoeten"},"pastSingular":"ontmoette","pastPlural":"ontmoetten","pastParticiple":"ontmoet","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":139,"id":1672,"word":"vieren","translation":"\u062c\u0634\u0646 \u06af\u0631\u0641\u062a\u0646","partOfSpeech":"verb","definition":"celebrate","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"vier","jij":"viert","hij":"viert","wij":"vieren"},"pastSingular":"vierde","pastPlural":"vierden","pastParticiple":"gevierd","presentIrregular":false,"separable":false,"class":"weak","source":"table"},{"n":140,"id":1685,"word":"inchecken","translation":"\u06a9\u0627\u0631\u062a \u0632\u062f\u0646 \u0645\u0628\u062f\u0627","partOfSpeech":"verb","definition":"check in","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"check in","jij":"checkt in","hij":"checkt in","wij":"checken in"},"pastSingular":"checkte in","pastPlural":"checkten in","pastParticiple":"ingecheckt","presentIrregular":false,"separable":true,"class":"weak","source":"stored"},{"n":141,"id":1686,"word":"uitchecken","translation":"\u06a9\u0627\u0631\u062a \u0632\u062f\u0646 \u0645\u0642\u0635\u062f","partOfSpeech":"verb","definition":"check out","createdAt":"2026-07-18T10:06:18.450Z","present":{"ik":"check uit","jij":"checkt uit","hij":"checkt uit","wij":"checken uit"},"pastSingular":"checkte uit","pastPlural":"checkten uit","pastParticiple":"uitgecheckt","presentIrregular":false,"separable":true,"class":"weak","source":"stored"},{"n":142,"id":1698,"word":"eruitzien","translation":"\u0628\u0647 \u0646\u0638\u0631 \u0631\u0633\u06cc\u062f\u0646","partOfSpeech":"verb (separable)","definition":"to look like, to appear, to seem","createdAt":"2026-08-09T14:31:27.059Z","present":{"ik":"zie eruit","jij":"ziet eruit","hij":"ziet eruit","wij":"zien eruit"},"pastSingular":"zag eruit","pastPlural":"zagen eruit","pastParticiple":"eruitgezien","presentIrregular":true,"separable":true,"class":"strong","source":"stored"},{"n":143,"id":1700,"word":"stelen","translation":"\u062f\u0632\u062f\u06cc\u062f\u0646","partOfSpeech":"verb","definition":"to steal; to take something without permission or legal right and without intending to return it","createdAt":"2026-08-09T14:32:49.596Z","present":{"ik":"steel","jij":"steelt","hij":"steelt","wij":"stelen"},"pastSingular":"stal","pastPlural":"stalen","pastParticiple":"gestolen","presentIrregular":true,"separable":false,"class":"strong","source":"stored"},{"n":144,"id":1703,"word":"stellen","translation":"\u0642\u0631\u0627\u0631 \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"to place, to put; to state, to ask","createdAt":"2026-08-10T16:35:42.075Z","present":{"ik":"stel","jij":"stelt","hij":"stelt","wij":"stellen"},"pastSingular":"stelde","pastPlural":"stelden","pastParticiple":"gesteld","presentIrregular":false,"separable":false,"class":"weak","source":"stored"},{"n":145,"id":1705,"word":"voorstellen","translation":"\u0645\u0639\u0631\u0641\u06cc \u06a9\u0631\u062f\u0646\u060c \u067e\u06cc\u0634\u0646\u0647\u0627\u062f \u06a9\u0631\u062f\u0646","partOfSpeech":"verb (separable)","definition":"to introduce; to suggest, to propose","createdAt":"2026-08-10T17:20:55.488Z","present":{"ik":"stel voor","jij":"stelt voor","hij":"stelt voor","wij":"stellen voor"},"pastSingular":"stelde voor","pastPlural":"stelden voor","pastParticiple":"voorgesteld","presentIrregular":false,"separable":true,"class":"weak","source":"stored"},{"n":146,"id":1706,"word":"verzetten","translation":"\u0645\u0642\u0627\u0648\u0645\u062a \u06a9\u0631\u062f\u0646\u060c \u0639\u0642\u0628 \u0627\u0646\u062f\u0627\u062e\u062a\u0646\u060c \u062c\u0627\u0628\u062c\u0627 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"to move/shift (something), to postpone, to resist/oppose","createdAt":"2026-08-10T17:24:10.660Z","present":{"ik":"verzet","jij":"verzet","hij":"verzet","wij":"verzetten"},"pastSingular":"verzette","pastPlural":"verzetten","pastParticiple":"verzet","presentIrregular":false,"separable":false,"class":"weak","source":"stored"},{"n":147,"id":1774,"word":"strekken","translation":"\u06a9\u0634\u06cc\u062f\u0646 / \u062f\u0631\u0627\u0632 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"stretch","createdAt":"2026-08-20T19:00:57.109Z","present":{"ik":"strek","jij":"strekt","hij":"strekt","wij":"strekken"},"pastSingular":"strekte","pastPlural":"strekten","pastParticiple":"gestrekt","presentIrregular":false,"separable":false,"class":"weak","source":"weak-fallback"},{"n":148,"id":1775,"word":"branden","translation":"\u0633\u0648\u062e\u062a\u0646","partOfSpeech":"verb","definition":"to burn","createdAt":"2026-08-20T19:00:57.109Z","present":{"ik":"brand","jij":"brandt","hij":"brandt","wij":"branden"},"pastSingular":"brandde","pastPlural":"brandden","pastParticiple":"gebrand","presentIrregular":false,"separable":false,"class":"weak","source":"weak-fallback"},{"n":149,"id":1778,"word":"bedanken","translation":"\u062a\u0634\u06a9\u0631 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"to thank","createdAt":"2026-08-20T19:00:57.109Z","present":{"ik":"bedank","jij":"bedankt","hij":"bedankt","wij":"bedanken"},"pastSingular":"bedankte","pastPlural":"bedankten","pastParticiple":"bedankt","presentIrregular":false,"separable":false,"class":"weak","source":"weak-fallback"},{"n":150,"id":1805,"word":"verliezen","translation":"\u0628\u0627\u062e\u062a\u0646 / \u0627\u0632 \u062f\u0633\u062a \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"lose","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"verlies","jij":"verliest","hij":"verliest","wij":"verliezen"},"pastSingular":"verloor","pastPlural":"verloren","pastParticiple":"verloren","presentIrregular":false,"separable":false,"class":"strong","source":"stored"},{"n":151,"id":1921,"word":"lachen","translation":"\u062e\u0646\u062f\u06cc\u062f\u0646","partOfSpeech":"verb","definition":"laugh","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"lach","jij":"lacht","hij":"lacht","wij":"lachen"},"pastSingular":"lachte","pastPlural":"lachten","pastParticiple":"gelachen","presentIrregular":false,"separable":false,"class":"strong","source":"stored"},{"n":152,"id":1922,"word":"rennen","translation":"\u062f\u0648\u06cc\u062f\u0646","partOfSpeech":"verb","definition":"to run","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"ren","jij":"rent","hij":"rent","wij":"rennen"},"pastSingular":"rende","pastPlural":"renden","pastParticiple":"gerend","presentIrregular":false,"separable":false,"class":"weak","source":"stored"},{"n":153,"id":1923,"word":"zingen","translation":"\u0622\u0648\u0627\u0632 \u062e\u0648\u0627\u0646\u062f\u0646","partOfSpeech":"verb","definition":"sing","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"zing","jij":"zingt","hij":"zingt","wij":"zingen"},"pastSingular":"zong","pastPlural":"zongen","pastParticiple":"gezongen","presentIrregular":false,"separable":false,"class":"strong","source":"stored"},{"n":154,"id":1924,"word":"dansen","translation":"\u0631\u0642\u0635\u06cc\u062f\u0646","partOfSpeech":"verb","definition":"dance","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"dans","jij":"danst","hij":"danst","wij":"dansen"},"pastSingular":"danste","pastPlural":"dansten","pastParticiple":"gedanst","presentIrregular":false,"separable":false,"class":"weak","source":"stored"},{"n":155,"id":1925,"word":"vliegen","translation":"\u067e\u0631\u0648\u0627\u0632 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"fly","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"vlieg","jij":"vliegt","hij":"vliegt","wij":"vliegen"},"pastSingular":"vloog","pastPlural":"vlogen","pastParticiple":"gevlogen","presentIrregular":false,"separable":false,"class":"strong","source":"stored"},{"n":156,"id":1926,"word":"klimmen","translation":"\u0628\u0627\u0644\u0627 \u0631\u0641\u062a\u0646 / \u06a9\u0648\u0647\u0646\u0648\u0631\u062f\u06cc \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"to climb","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"klim","jij":"klimt","hij":"klimt","wij":"klimmen"},"pastSingular":"klom","pastPlural":"klommen","pastParticiple":"geklommen","presentIrregular":false,"separable":false,"class":"strong","source":"stored"},{"n":157,"id":1927,"word":"bijten","translation":"\u06af\u0627\u0632 \u06af\u0631\u0641\u062a\u0646","partOfSpeech":"verb","definition":"to bite","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"bijt","jij":"bijt","hij":"bijt","wij":"bijten"},"pastSingular":"beet","pastPlural":"beten","pastParticiple":"gebeten","presentIrregular":false,"separable":false,"class":"strong","source":"stored"},{"n":158,"id":1928,"word":"rusten","translation":"\u0627\u0633\u062a\u0631\u0627\u062d\u062a \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"to rest","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"rust","jij":"rust","hij":"rust","wij":"rusten"},"pastSingular":"rustte","pastPlural":"rustten","pastParticiple":"gerust","presentIrregular":false,"separable":false,"class":"weak","source":"stored"},{"n":159,"id":1929,"word":"dromen","translation":"\u0631\u0624\u06cc\u0627 \u062f\u06cc\u062f\u0646 / \u0631\u0648\u06cc\u0627 \u062f\u0627\u0634\u062a\u0646","partOfSpeech":"verb","definition":"to dream","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"droom","jij":"droomt","hij":"droomt","wij":"dromen"},"pastSingular":"droomde","pastPlural":"droomden","pastParticiple":"gedroomd","presentIrregular":false,"separable":false,"class":"weak","source":"stored"},{"n":160,"id":1930,"word":"vullen","translation":"\u067e\u064f\u0631 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"to fill","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"vul","jij":"vult","hij":"vult","wij":"vullen"},"pastSingular":"vulde","pastPlural":"vulden","pastParticiple":"gevuld","presentIrregular":false,"separable":false,"class":"weak","source":"stored"},{"n":161,"id":1931,"word":"plaatsen","translation":"\u0642\u0631\u0627\u0631 \u062f\u0627\u062f\u0646 / \u06af\u0630\u0627\u0634\u062a\u0646","partOfSpeech":"verb","definition":"place (put)","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"plaats","jij":"plaatst","hij":"plaatst","wij":"plaatsen"},"pastSingular":"plaatste","pastPlural":"plaatsten","pastParticiple":"geplaatst","presentIrregular":false,"separable":false,"class":"weak","source":"stored"},{"n":162,"id":1932,"word":"eindigen","translation":"\u062a\u0645\u0627\u0645 \u0634\u062f\u0646 / \u067e\u0627\u06cc\u0627\u0646 \u062f\u0627\u062f\u0646","partOfSpeech":"verb","definition":"to end","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"eindig","jij":"eindigt","hij":"eindigt","wij":"eindigen"},"pastSingular":"eindigde","pastPlural":"eindigden","pastParticiple":"ge\u00ebindigd","presentIrregular":false,"separable":false,"class":"weak","source":"stored"},{"n":163,"id":1933,"word":"organiseren","translation":"\u0633\u0627\u0632\u0645\u0627\u0646\u200c\u062f\u0647\u06cc \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"to organize","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"organiseer","jij":"organiseert","hij":"organiseert","wij":"organiseren"},"pastSingular":"organiseerde","pastPlural":"organiseerden","pastParticiple":"georganiseerd","presentIrregular":false,"separable":false,"class":"weak","source":"stored"},{"n":164,"id":1934,"word":"danken","translation":"\u062a\u0634\u06a9\u0631 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"to thank","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"dank","jij":"dankt","hij":"dankt","wij":"danken"},"pastSingular":"dankte","pastPlural":"dankten","pastParticiple":"gedankt","presentIrregular":false,"separable":false,"class":"weak","source":"stored"},{"n":165,"id":1935,"word":"interesseren","translation":"\u0639\u0644\u0627\u0642\u0647\u200c\u0645\u0646\u062f \u0628\u0648\u062f\u0646 (zich ...)","partOfSpeech":"verb (refl. meestal)","definition":"to be interested","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"interesseer","jij":"interesseert","hij":"interesseert","wij":"interesseren"},"pastSingular":"interesseerde","pastPlural":"interesseerden","pastParticiple":"ge\u00efnteresseerd","presentIrregular":false,"separable":false,"class":"weak","source":"stored"},{"n":166,"id":1936,"word":"wensen","translation":"\u0622\u0631\u0632\u0648 \u06a9\u0631\u062f\u0646 / \u062e\u0648\u0627\u0633\u062a\u0646","partOfSpeech":"verb","definition":"to wish","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"wens","jij":"wenst","hij":"wenst","wij":"wensen"},"pastSingular":"wenste","pastPlural":"wensten","pastParticiple":"gewenst","presentIrregular":false,"separable":false,"class":"weak","source":"stored"},{"n":167,"id":1937,"word":"verbieden","translation":"\u0645\u0645\u0646\u0648\u0639 \u06a9\u0631\u062f\u0646","partOfSpeech":"verb","definition":"to forbid","createdAt":"2026-08-20T19:03:25.293Z","present":{"ik":"verbied","jij":"verbiedt","hij":"verbiedt","wij":"verbieden"},"pastSingular":"verbood","pastPlural":"verboden","pastParticiple":"verboden","presentIrregular":false,"separable":false,"class":"strong","source":"stored"}]}</script>
+<script>
+(function () {
+  "use strict";
+
+  var payload = JSON.parse(document.getElementById("data").textContent);
+  var verbs = payload.verbs;
+  var sheet = document.getElementById("sheet");
+  var qInput = document.getElementById("q");
+
+  var state = { q: "", cls: null, sep: false };
+
+  var MONTHS = ["January","February","March","April","May","June",
+                "July","August","September","October","November","December"];
+
+  function batchLabel(iso) {
+    var d = new Date(iso);
+    return d.getUTCDate() + " " + MONTHS[d.getUTCMonth()] + " " + d.getUTCFullYear();
+  }
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  var CLASS_LABEL = { weak: "Regelmatig", strong: "Sterk", irregular: "Onregelmatig" };
+
+  function matches(v) {
+    if (state.cls && v.class !== state.cls) return false;
+    if (state.sep && !v.separable) return false;
+    if (!state.q) return true;
+    var hay = (v.word + " " + v.translation + " " + v.definition + " " +
+               v.pastSingular + " " + v.pastPlural + " " + (v.pastParticiple || "")).toLowerCase();
+    return hay.indexOf(state.q) !== -1;
+  }
+
+  function render() {
+    var shown = verbs.filter(matches);
+    var html = "";
+    var batch = null;
+
+    shown.forEach(function (v) {
+      var b = batchLabel(v.createdAt);
+      if (b !== batch) {
+        batch = b;
+        var n = shown.filter(function (x) { return batchLabel(x.createdAt) === b; }).length;
+        html += '<p class="batch">Added ' + esc(b) + ' <span class="n">' + n + '</span></p>';
+      }
+
+      html += '<article class="row is-' + v.class + '">' +
+        '<span class="idx">' + v.n + '</span>' +
+        '<span class="inf">' +
+          '<span class="headline"><b>' + esc(v.word) + '</b>' +
+            // Only the exceptions are tagged. A weak verb is the derivable default, so tagging
+            // all 95 of them would print the word "Regelmatig" down two thirds of the sheet
+            // and bury the 72 that actually have to be memorised.
+            (v.class !== 'weak'
+              ? '<span class="tag k-' + v.class + '">' + CLASS_LABEL[v.class] + '</span>' : '') +
+            (v.separable ? '<span class="tag sep">scheidbaar</span>' : '') +
+          '</span>' +
+          '<span class="meanings">' +
+            '<span class="fa">' + esc(v.translation) + '</span>' +
+            '<span class="gloss">' + esc(v.definition) + '</span>' +
+          '</span>' +
+        '</span>' +
+        '<span class="form vd" data-label="Volt. deelw.">' +
+          (v.pastParticiple ? esc(v.pastParticiple) : '<span class="none">geen</span>') +
+        '</span>' +
+        '<span class="form" data-label="O.V.T. enk.">' + esc(v.pastSingular) + '</span>' +
+        '<span class="form" data-label="O.V.T. mv.">' + esc(v.pastPlural) + '</span>' +
+      '</article>';
+    });
+
+    if (!shown.length) {
+      html = '<div class="empty"><b>Niets gevonden</b>No verb matches that search.</div>';
+    }
+    sheet.innerHTML = html;
+
+    document.getElementById("s-total").textContent = shown.length;
+    ["weak", "strong", "irregular"].forEach(function (k) {
+      document.getElementById("s-" + k).textContent =
+        shown.filter(function (v) { return v.class === k; }).length;
+    });
+    document.getElementById("s-sep").textContent =
+      shown.filter(function (v) { return v.separable; }).length;
+  }
+
+  qInput.addEventListener("input", function () {
+    state.q = qInput.value.trim().toLowerCase();
+    render();
+  });
+
+  document.querySelectorAll(".chip").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var f = btn.dataset.f, k = btn.dataset.k;
+      if (f === "all") { state.cls = null; state.sep = false; }
+      else if (f === "sep") { state.sep = !state.sep; }
+      else { state.cls = state.cls === k ? null : k; }
+
+      document.querySelectorAll(".chip").forEach(function (b) {
+        var bf = b.dataset.f, bk = b.dataset.k;
+        var on = bf === "all" ? (!state.cls && !state.sep)
+               : bf === "sep" ? state.sep
+               : state.cls === bk;
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+      render();
+    });
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "/" && document.activeElement !== qInput) {
+      e.preventDefault();
+      qInput.focus();
+      qInput.select();
+    } else if (e.key === "Escape" && document.activeElement === qInput) {
+      qInput.value = ""; state.q = ""; render(); qInput.blur();
+    }
+  });
+
+  /* ---- Colour theme -------------------------------------------------------
+     Three states, not two. The page is published into a viewer that has its own light/dark
+     setting and may stamp data-theme on <html> itself, so "auto" means *defer to that* and is
+     represented by touching nothing: an unclicked page must not override a choice the reader
+     already made outside it. Only a stored preference, or a click, writes the attribute.
+     Every storage access is guarded: the accessor itself throws in some embedding contexts. */
+  var THEMES = ["auto", "light", "dark"];
+  var ICONS = {
+    auto:  '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">' +
+             '<circle cx="10" cy="10" r="7"/><path d="M10 3a7 7 0 0 1 0 14Z" fill="currentColor" stroke="none"/></svg>',
+    light: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">' +
+             '<circle cx="10" cy="10" r="3.6"/><path d="M10 1.7v1.8M10 16.5v1.8M18.3 10h-1.8M3.5 10H1.7' +
+             'M15.9 4.1l-1.3 1.3M5.4 14.6l-1.3 1.3M15.9 15.9l-1.3-1.3M5.4 5.4L4.1 4.1"/></svg>',
+    dark:  '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">' +
+             '<path d="M16.5 12.6A7 7 0 0 1 7.4 3.5a7 7 0 1 0 9.1 9.1Z"/></svg>'
+  };
+  var LABEL = { auto: "Theme: match my device", light: "Theme: light", dark: "Theme: dark" };
+
+  var themeBtn = document.getElementById("theme");
+  var stored = null;
+  try { stored = localStorage.getItem("theme-v1"); } catch (e) { stored = null; }
+  var theme = THEMES.indexOf(stored) !== -1 ? stored : "auto";
+
+  function paintTheme(writeDom) {
+    if (writeDom) {
+      if (theme === "auto") document.documentElement.removeAttribute("data-theme");
+      else document.documentElement.setAttribute("data-theme", theme);
+    }
+    themeBtn.innerHTML = ICONS[theme];
+    themeBtn.setAttribute("aria-label", LABEL[theme] + " \u2014 click to change");
+    themeBtn.title = LABEL[theme];
+  }
+
+  themeBtn.addEventListener("click", function () {
+    theme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
+    try { localStorage.setItem("theme-v1", theme); } catch (e) { /* private mode; fine */ }
+    paintTheme(true);
+  });
+
+  // On load, only write the DOM when the reader has a stored preference for THIS page.
+  paintTheme(theme !== "auto");
+
+  document.getElementById("meta").textContent =
+    payload.count + " verbs from the \u201c" + payload.setName + "\u201d set \u00b7 " +
+    "forms as served by the Essential Words API \u00b7 generated " +
+    payload.generatedAt.slice(0, 10);
+
+  render();
+})();
+</script>
