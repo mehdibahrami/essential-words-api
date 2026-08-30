@@ -2,6 +2,7 @@ const leitner = require('../utils/leitner');
 const { nowIso, startOfDay } = require('../utils/time');
 const { notFound } = require('../middleware/errorHandler');
 const { serializeWord, getWordRow } = require('./words');
+const { posClause } = require('../utils/partOfSpeech');
 const recall = require('./recall');
 
 function scope(clauses, params, { languageId, setId }) {
@@ -9,11 +10,20 @@ function scope(clauses, params, { languageId, setId }) {
   if (setId != null) { clauses.push('wordSetId = @setId'); params.setId = Number(setId); }
 }
 
-/** New-word queue: unlearned, box 0, due. Mirrors fetchWordsForInitialReview. */
-function reviewNext(db, { languageId, setId, limit = 20 } = {}) {
+/**
+ * New-word queue: unlearned, box 0, due. Mirrors fetchWordsForInitialReview.
+ *
+ * `pos` narrows the queue to one part-of-speech family (see `utils/partOfSpeech`). The
+ * filter belongs here rather than in the client because the client only ever holds one
+ * page of this queue: filtering 20 rows locally would report "all done" whenever that
+ * page happened to contain no verbs, while hundreds more waited behind it.
+ */
+function reviewNext(db, { languageId, setId, limit = 20, pos } = {}) {
   const clauses = ['deletedAt IS NULL', 'isLearned = 0', 'leitnerBox = 0', 'nextPracticeDate <= @now'];
   const params = { now: nowIso(), limit: Number(limit) || 20 };
   scope(clauses, params, { languageId, setId });
+  const posSql = posClause(params, pos);
+  if (posSql) clauses.push(posSql);
   return db
     .prepare(`SELECT * FROM words WHERE ${clauses.join(' AND ')} ORDER BY id ASC LIMIT @limit`)
     .all(params)

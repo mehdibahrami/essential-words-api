@@ -56,7 +56,7 @@ router.delete('/sets/:id/words', asyncHandler((req, res) => res.json(words.delet
 router.delete('/languages/:id/words', asyncHandler((req, res) => res.json(words.deleteWordsForLanguage(db(req), idParam(req)))));
 
 // ---- Learning: review (new words) & practice (Leitner) ----
-router.get('/review/next', asyncHandler((req, res) => res.json(learning.reviewNext(db(req), { languageId: req.query.languageId, setId: req.query.setId, limit: req.query.limit }))));
+router.get('/review/next', asyncHandler((req, res) => res.json(learning.reviewNext(db(req), { languageId: req.query.languageId, setId: req.query.setId, limit: req.query.limit, pos: req.query.pos }))));
 router.post('/review/:wordId/learned', asyncHandler((req, res) => res.json(learning.markLearned(db(req), idParam(req)))));
 
 router.get('/practice/next', asyncHandler((req, res) => {

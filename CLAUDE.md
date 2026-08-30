@@ -42,6 +42,19 @@ Full design in [`docs/DESIGN.md`](docs/DESIGN.md).
 - **Language convention, easy to get backwards (a real bug, shipped once — see 2026-08-09 fix below): `wordTranslated`/`definitionTranslated`/`example1Translated`/`example2Translated` are always PERSIAN, regardless of the target language** — every existing word in the DB (Dutch, English, whatever) follows this, since the app is for a Persian-speaking learner. `definition` itself is always a short **English** dictionary-style gloss (e.g. "occupied / busy", "with", "in front of") — NOT written in the target language, even for a Dutch/French/etc. word. Only `headword`/`example1`/`example2` are in the target language. The first shipped version of `buildPrompt` asked for English translations and a target-language definition — exactly backwards on both fields — and produced one real word ("Tevreden") with English `wordTranslated`/`definitionTranslated` and a Dutch `definition`, fixed by hand via `PUT /api/words/:id` after the prompt was corrected. Verify against real data before changing this prompt again: `curl .../api/words?languageId=<id>` and read a few existing rows — don't infer the convention from `quiz.js`'s `questionsInEnglish` flag, which is a separate, unrelated concept (quiz question wording, not stored word translations).
 - Route: `router.post('/sets/:id/words/ai-generate', ...)` in `src/routes/api.js`, mounted alongside the other `/sets/:id/words/*` routes. `deps.generateWordDetails` is the injection point for tests, mirroring `quiz.js`'s `deps.generate` pattern.
 
+## Part-of-speech filter (`?pos=` on `/api/review/next`)
+- `src/utils/partOfSpeech.js` maps free-text `partOfSpeech` onto five families — `verb`,
+  `noun`, `adjective`, `adverb`, `other` (plus `all` = no restriction). `other` is the
+  negation of the other four, so preposition/pronoun/question word stay reachable.
+- **Token matching, not `LIKE '%verb%'`** — that would put every *adverb* in the verb
+  family. The SQL lowercases, replaces `/()-,` with spaces, pads with spaces, and matches
+  `'% verb %'`; `matchesPosFamily` is the JS twin, used by the app for its chip counts.
+  Both read the same `POS_FAMILIES` table; keep them together. `adv`/`adj` are tokens
+  because the DB really holds abbreviated labels (`adv/prep`).
+- An unknown `pos` is a **400**, never a silent fallback to unfiltered — same rule as
+  Recall's `wrong`. The app (`PartOfSpeechFilter`) mirrors this table; tests live in
+  `tests/partOfSpeech.test.js`.
+
 ## Recall (`/api/recall/*`) — records answers, never schedules
 - **`src/services/recall.js` is the one service that may not write to `words`.** Recall is the app's reverse drill (prompt in the learner's own language, answer in the target language); its history lives in its own append-only `recall_attempts` table (`wordId`, `correct`, `createdAt`, FK `ON DELETE CASCADE`), declared in `SCHEMA` rather than a numbered migration because `IF NOT EXISTS` reaches existing DBs on every `openDatabase`. The separation is the feature: a separate table makes "cannot move a Leitner box" structural instead of a matter of discipline. Same rule `learning.openLapses` states for quiz lapses — scheduling has one authority and it is the Practice flow. `tests/recall.test.js` snapshots the whole `words` row before and after an answer and asserts deep equality; don't weaken that test.
 - **Pool is learned words only** (`isLearned = 1 AND leitnerBox >= 1`), scoped by `languageId`/`setId`. `poolClauses()` is shared by `queue` and `count` on purpose: a count that disagrees with the session it predicts is exactly the bug this guards against, and `MAX_SESSION_WORDS = 500` is both the default and the cap of `limit` for the same reason.
