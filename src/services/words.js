@@ -76,7 +76,12 @@ function buildGrammar(row, db) {
 /** Present isLearned as a boolean and attach the grammar DTO. */
 function serializeWord(row, db) {
   if (!row) return row;
-  return { ...row, isLearned: !!row.isLearned, grammar: buildGrammar(row, db) };
+  // pinnedAt is internal scheduling state (see learning.reviewNext) -- it must never
+  // reach the client contract, so it is stripped explicitly rather than left to ride
+  // along with the `...row` spread.
+  const dto = { ...row, isLearned: !!row.isLearned, grammar: buildGrammar(row, db) };
+  delete dto.pinnedAt;
+  return dto;
 }
 
 /** Normalize an incoming grammar value (object or JSON string) to a stored TEXT column. */

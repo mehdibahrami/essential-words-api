@@ -50,3 +50,10 @@ test('pinning leads within a part-of-speech filtered queue too', () => {
   const queue = learning.reviewNext(db, { setId: set.id, pos: 'verb' });
   expect(queue.map((w) => w.id)).toEqual([c.id, a.id]);
 });
+
+test('a pinned word\'s DTO never exposes pinnedAt', () => {
+  const { db, ids } = seed();
+  pin(db, ids[0], '2026-09-15T10:00:00.000Z');
+  const dto = words.getWord(db, ids[0]);
+  expect(dto).not.toHaveProperty('pinnedAt');
+});
