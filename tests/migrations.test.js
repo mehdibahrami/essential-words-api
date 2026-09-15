@@ -1,6 +1,9 @@
 const Database = require('better-sqlite3');
 const { openDatabase } = require('../src/db');
 const { runMigrations, migrations } = require('../src/db/migrations');
+const languages = require('../src/services/languages');
+const sets = require('../src/services/sets');
+const words = require('../src/services/words');
 
 describe('schema_migrations', () => {
   test('a fresh database records every migration as applied', () => {
@@ -125,4 +128,15 @@ describe('migration 002: word_material gets a FK + index', () => {
     db.prepare('DELETE FROM words WHERE id = 1').run(); // a real hard delete, not the app's soft delete
     expect(db.prepare('SELECT COUNT(*) c FROM word_material WHERE wordId = 1').get().c).toBe(0);
   });
+});
+
+test('migration 003 adds pinnedAt and leaves existing rows null', () => {
+  const db = openDatabase(':memory:');
+  const lang = languages.createLanguage(db, { name: 'Dutch', code: 'nl-NL' });
+  const set = sets.createSet(db, { name: 'Basics', languageId: lang.id });
+  const created = words.createWord(db, { word: 'huis', languageId: lang.id, wordSetId: set.id });
+
+  const cols = db.prepare('PRAGMA table_info(words)').all().map((c) => c.name);
+  expect(cols).toContain('pinnedAt');
+  expect(db.prepare('SELECT pinnedAt FROM words WHERE id = ?').get(created.id).pinnedAt).toBeNull();
 });

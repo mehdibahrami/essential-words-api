@@ -1,8 +1,9 @@
 const migration001 = require('./001_baseline_columns');
 const migration002 = require('./002_word_material_fk');
+const migration003 = require('./003_words_pinned_at');
 
 /** Ordered by version. Add new migrations here, never renumber or edit a shipped one. */
-const migrations = [migration001, migration002];
+const migrations = [migration001, migration002, migration003];
 
 /**
  * Apply every migration not yet recorded in `schema_migrations`, in order, each in

@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS words (
   openLapse INTEGER NOT NULL DEFAULT 0,
   lastLapsedAt TEXT,
   grammar TEXT,
+  pinnedAt TEXT,
   createdAt TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   updatedAt TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   deletedAt TEXT

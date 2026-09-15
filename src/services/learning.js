@@ -24,8 +24,15 @@ function reviewNext(db, { languageId, setId, limit = 20, pos } = {}) {
   scope(clauses, params, { languageId, setId });
   const posSql = posClause(params, pos);
   if (posSql) clauses.push(posSql);
+  // Pinned words (added from the Dutch exam page) lead the queue, most recent first.
+  // Every pre-existing row has pinnedAt NULL, so `pinnedAt IS NULL` is 1 for all of
+  // them and they fall through to `id ASC` -- the ordering this had before.
   return db
-    .prepare(`SELECT * FROM words WHERE ${clauses.join(' AND ')} ORDER BY id ASC LIMIT @limit`)
+    .prepare(
+      `SELECT * FROM words WHERE ${clauses.join(' AND ')}
+       ORDER BY pinnedAt IS NULL ASC, pinnedAt DESC, id ASC
+       LIMIT @limit`
+    )
     .all(params)
     .map((r) => serializeWord(r, db));
 }
