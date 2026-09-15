@@ -130,13 +130,74 @@ describe('migration 002: word_material gets a FK + index', () => {
   });
 });
 
-test('migration 003 adds pinnedAt and leaves existing rows null', () => {
-  const db = openDatabase(':memory:');
-  const lang = languages.createLanguage(db, { name: 'Dutch', code: 'nl-NL' });
-  const set = sets.createSet(db, { name: 'Basics', languageId: lang.id });
-  const created = words.createWord(db, { word: 'huis', languageId: lang.id, wordSetId: set.id });
+describe('migration 003: words gets pinnedAt', () => {
+  test('a fresh database already has the column', () => {
+    const db = openDatabase(':memory:');
+    const lang = languages.createLanguage(db, { name: 'Dutch', code: 'nl-NL' });
+    const set = sets.createSet(db, { name: 'Basics', languageId: lang.id });
+    const created = words.createWord(db, { word: 'huis', languageId: lang.id, wordSetId: set.id });
 
-  const cols = db.prepare('PRAGMA table_info(words)').all().map((c) => c.name);
-  expect(cols).toContain('pinnedAt');
-  expect(db.prepare('SELECT pinnedAt FROM words WHERE id = ?').get(created.id).pinnedAt).toBeNull();
+    const cols = db.prepare('PRAGMA table_info(words)').all().map((c) => c.name);
+    expect(cols).toContain('pinnedAt');
+    expect(db.prepare('SELECT pinnedAt FROM words WHERE id = ?').get(created.id).pinnedAt).toBeNull();
+  });
+
+  test('the ALTER TABLE path adds pinnedAt to a database that predates it', () => {
+    // openDatabase's SCHEMA already declares pinnedAt in CREATE TABLE, so a :memory:
+    // database proves nothing about this migration. The Pi's real database predates the
+    // column, which makes the ALTER path the only one that runs in production -- so build
+    // the pre-pinnedAt table by hand, exactly as the migration 001 and 002 tests above do.
+    const db = new Database(':memory:');
+    db.pragma('foreign_keys = ON');
+    db.exec(`
+      CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL, appliedAt TEXT);
+      CREATE TABLE languages (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, code TEXT UNIQUE, createdAt TEXT, updatedAt TEXT, deletedAt TEXT);
+      CREATE TABLE word_sets (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, languageId INTEGER, createdAt TEXT, updatedAt TEXT, deletedAt TEXT);
+      CREATE TABLE words (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, languageId INTEGER, wordSetId INTEGER, word TEXT NOT NULL,
+        wordTranslated TEXT NOT NULL DEFAULT '', partOfSpeech TEXT NOT NULL DEFAULT '',
+        definition TEXT NOT NULL DEFAULT '', definitionTranslated TEXT NOT NULL DEFAULT '',
+        example1 TEXT, example1Translated TEXT, example2 TEXT, example2Translated TEXT,
+        example3 TEXT, example3Translated TEXT, leitnerBox INTEGER NOT NULL DEFAULT 0,
+        nextPracticeDate TEXT, isLearned INTEGER NOT NULL DEFAULT 0, lastReviewedDate TEXT,
+        lapseCount INTEGER NOT NULL DEFAULT 0, openLapse INTEGER NOT NULL DEFAULT 0, lastLapsedAt TEXT,
+        grammar TEXT, createdAt TEXT, updatedAt TEXT, deletedAt TEXT
+      );
+      CREATE TABLE word_material (
+        wordId INTEGER NOT NULL, level TEXT NOT NULL, sentence TEXT, clozeSentence TEXT,
+        clozeAnswer TEXT, clozeDistractors TEXT, sentenceTranslation TEXT, hook TEXT,
+        confusables TEXT, createdAt TEXT NOT NULL DEFAULT (datetime('now')),
+        PRIMARY KEY (wordId, level)
+      );
+    `);
+    db.prepare("INSERT INTO languages (id, name, code) VALUES (1, 'Dutch', 'nl-NL')").run();
+    db.prepare("INSERT INTO word_sets (id, name, languageId) VALUES (1, 'S', 1)").run();
+    db.prepare("INSERT INTO words (id, languageId, wordSetId, word) VALUES (1, 1, 1, 'liggen')").run();
+    db.prepare("INSERT INTO words (id, languageId, wordSetId, word) VALUES (2, 1, 1, 'het huis')").run();
+
+    expect(db.prepare('PRAGMA table_info(words)').all().map((c) => c.name)).not.toContain('pinnedAt');
+
+    runMigrations(db);
+
+    expect(db.prepare('PRAGMA table_info(words)').all().map((c) => c.name)).toContain('pinnedAt');
+    // Every pre-existing row is unpinned, so the new ordering is a no-op on real data.
+    expect(db.prepare('SELECT id, pinnedAt FROM words ORDER BY id').all())
+      .toEqual([{ id: 1, pinnedAt: null }, { id: 2, pinnedAt: null }]);
+
+    const applied = db.prepare('SELECT version FROM schema_migrations ORDER BY version').all().map((r) => r.version);
+    expect(applied).toEqual([1, 2, 3]);
+
+    // Idempotent: a second run must not re-ALTER (which would throw "duplicate column
+    // name") or duplicate any ledger row.
+    expect(() => runMigrations(db)).not.toThrow();
+    expect(db.prepare('SELECT version FROM schema_migrations ORDER BY version').all().map((r) => r.version))
+      .toEqual([1, 2, 3]);
+    expect(db.prepare('SELECT id, pinnedAt FROM words ORDER BY id').all())
+      .toEqual([{ id: 1, pinnedAt: null }, { id: 2, pinnedAt: null }]);
+
+    // Closed explicitly: a hand-built better-sqlite3 handle left open until process exit
+    // is what trips the intermittent "Assertion failed: (env) != nullptr" teardown crash
+    // on Node 24.
+    db.close();
+  });
 });
