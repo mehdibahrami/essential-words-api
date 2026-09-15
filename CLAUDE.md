@@ -41,6 +41,19 @@ Full design in [`docs/DESIGN.md`](docs/DESIGN.md).
 - **A 502 `GEMINI_INCOMPLETE`** is thrown if the model's response is missing `wordTranslated` or `definition` — those are the two fields the client depends on to render anything, so a partial response fails loudly instead of inserting a half-populated word.
 - **Language convention, easy to get backwards (a real bug, shipped once — see 2026-08-09 fix below): `wordTranslated`/`definitionTranslated`/`example1Translated`/`example2Translated` are always PERSIAN, regardless of the target language** — every existing word in the DB (Dutch, English, whatever) follows this, since the app is for a Persian-speaking learner. `definition` itself is always a short **English** dictionary-style gloss (e.g. "occupied / busy", "with", "in front of") — NOT written in the target language, even for a Dutch/French/etc. word. Only `headword`/`example1`/`example2` are in the target language. The first shipped version of `buildPrompt` asked for English translations and a target-language definition — exactly backwards on both fields — and produced one real word ("Tevreden") with English `wordTranslated`/`definitionTranslated` and a Dutch `definition`, fixed by hand via `PUT /api/words/:id` after the prompt was corrected. Verify against real data before changing this prompt again: `curl .../api/words?languageId=<id>` and read a few existing rows — don't infer the convention from `quiz.js`'s `questionsInEnglish` flag, which is a separate, unrelated concept (quiz question wording, not stored word translations).
 - Route: `router.post('/sets/:id/words/ai-generate', ...)` in `src/routes/api.js`, mounted alongside the other `/sets/:id/words/*` routes. `deps.generateWordDetails` is the injection point for tests, mirroring `quiz.js`'s `deps.generate` pattern.
+- **A caller that already has the translation and gloss may supply them** —
+  `wordTranslated`, `definition`, `posHint` and `pinned` are optional body fields on
+  `POST /sets/:id/words/ai-generate`. When `wordTranslated`/`definition` are present the
+  prompt states them as ALREADY KNOWN and strikes them from the requested field list, and
+  `GEMINI_INCOMPLETE` then only guards fields the model still owns. The Dutch exam page
+  (`~/Projects/NodeJS/dutch-exam`) is the caller; the iOS app still sends `{word}` alone
+  and takes the identical path.
+- **`posHint` is a hint, never an override.** The exam page's part-of-speech vocabulary
+  is coarse (`noun`/`verb`/`adjective`); the model still decides `partOfSpeech`, which is
+  what keeps a new separable verb labelled `"verb (separable)"` rather than plain `verb`
+  — the distinction `dutchGrammar.js`'s closed `SEPARABLE_VERBS` list cannot derive.
+- **`generateWordForSet(db, setId, input, deps)` takes a string OR an options object.**
+  The string form is the iOS app's and is kept working deliberately; don't "tidy" it away.
 
 ## Part-of-speech filter (`?pos=` on `/api/review/next`)
 - `src/utils/partOfSpeech.js` maps free-text `partOfSpeech` onto five families — `verb`,
@@ -71,6 +84,11 @@ Full design in [`docs/DESIGN.md`](docs/DESIGN.md).
 - Dates are **ISO-8601 UTC strings**; "start of day" for scheduling uses `APP_TIMEZONE` (default `Europe/Amsterdam`), not UTC.
 - `POST /sync/import` preserves incoming IDs (one-time migration from the app DB); other creates use server-assigned autoincrement IDs.
 - **`serializeWord(row, db)` must never be passed bare to `.map(serializeWord)`** — the array index arrives as `db` and (previously) 500'd the review/practice queues. Always `.map((r) => serializeWord(r, db))`. `languageCode` is hardened to ignore a non-db arg; regression test: "review queue serialization".
+- **`words.pinnedAt` orders the New queue, nothing else.** `learning.reviewNext` sorts
+  `pinnedAt IS NULL ASC, pinnedAt DESC, id ASC`; every pre-existing row is null, so the
+  clause is a no-op on old data. It is an *ordering*, so pinned words also lead a
+  `pos`-filtered queue. `practiceNext`, `recall.queue` and the Vocabs list are untouched,
+  and `pinnedAt` is deliberately **not** in the word DTO — the Swift client doesn't read it.
 
 ## Deploy (Raspberry Pi)
 - Host: `medhibahrami@192.168.2.10`, at `~/essential-words-api`, port **3100** (3000 = ev-route-planner). Node 18 on the Pi.
