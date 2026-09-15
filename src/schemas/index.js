@@ -102,7 +102,11 @@ const bulkCreateWordsSchema = z.union([
 // is required. The four optional fields let a caller that already HAS the translation
 // and gloss (the Dutch exam page) supply them instead of paying for the model to
 // re-derive them; `posHint` is context for the model, never an override; `pinned` lifts
-// the word to the front of the New queue. `.strict()` is kept, so a typo is still a 400.
+// the word to the front of the New queue. `keepHeadword` pins the headword to `word` as
+// sent, for a caller whose list is curated and whose inflected forms ("de boodschappen",
+// "naar bed gaan") are deliberate rather than typos -- without it the model's own
+// normalization would create a different word than the one asked for. `.strict()` is
+// kept, so a typo is still a 400.
 const aiGenerateWordSchema = z
   .object({
     word: z.string().min(1),
@@ -110,6 +114,7 @@ const aiGenerateWordSchema = z
     definition: optionalString,
     posHint: optionalString,
     pinned: z.boolean().optional(),
+    keepHeadword: z.boolean().optional(),
   })
   .strict();
 

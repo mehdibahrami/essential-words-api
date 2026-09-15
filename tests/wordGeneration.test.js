@@ -330,3 +330,76 @@ describe('caller-supplied fields', () => {
     expect(created.wordTranslated).toBe('میز');
   });
 });
+
+describe('keepHeadword', () => {
+  // The exam page's word list is curated: "de boodschappen" is plural on purpose, and
+  // "naar bed gaan" is an expression. Without this flag the model's own normalization
+  // turns them into "de boodschap" / "gaan", creating a row the page never asked for and
+  // can never mark as added.
+  const plural = { wordTranslated: 'خریدها', definition: 'groceries', posHint: 'noun (plural)' };
+  const modelSingularises = async () => ({
+    headword: 'de boodschap', // the model normalized anyway
+    partOfSpeech: 'noun', definitionTranslated: 'خریدهای روزانه',
+    example1: 'Ik doe de boodschappen.', example1Translated: 'من خرید می‌کنم.',
+    example2: 'De boodschappen zijn duur.', example2Translated: 'خریدها گران هستند.',
+    grammar: { article: 'de', plural: 'boodschappen' },
+  });
+
+  test('the caller-supplied headword wins over the model\'s normalized one', async () => {
+    const { db, set } = seedDutch();
+    const created = await generateWordForSet(
+      db, set.id,
+      { word: 'de boodschappen', keepHeadword: true, ...plural },
+      { generateWordDetails: modelSingularises }
+    );
+    expect(created.word).toBe('de boodschappen');
+  });
+
+  test('the duplicate check keys off the caller\'s headword, not the model\'s', async () => {
+    const { db, set } = seedDutch();
+    const body = { word: 'de boodschappen', keepHeadword: true, ...plural };
+
+    await generateWordForSet(db, set.id, body, { generateWordDetails: modelSingularises });
+
+    // The second attempt's model returns a headword that matches NOTHING in the set, so
+    // the 409 can only come from the check testing the CALLER's "de boodschappen".
+    const modelDrifts = async () => ({
+      headword: 'de inkopen', partOfSpeech: 'noun', definitionTranslated: 'خریدها',
+      example1: 'Ik doe de inkopen.', example1Translated: 'من خرید می‌کنم.',
+    });
+    await expect(generateWordForSet(db, set.id, body, { generateWordDetails: modelDrifts }))
+      .rejects.toMatchObject({ status: 409 });
+    expect(words.listWords(db, { setId: set.id })).toHaveLength(1);
+  });
+
+  test('without the flag the model\'s headword still wins (unchanged behaviour)', async () => {
+    const { db, set } = seedDutch();
+    const created = await generateWordForSet(
+      db, set.id,
+      { word: 'de boodschappen', ...plural },
+      { generateWordDetails: modelSingularises }
+    );
+    expect(created.word).toBe('de boodschap');
+  });
+
+  test('the prompt stops asking for a headword and drops the singularisation rule', () => {
+    const lang = { name: 'Dutch', code: 'nl-NL' };
+    const kept = buildPrompt(lang, 'de boodschappen', { ...plural, keepHeadword: true });
+    // the LANGUAGE RULES line still names "headword" (it is still Dutch); what must be
+    // gone is the REQUEST for the field.
+    expect(kept).not.toMatch(/- "headword":/);
+    expect(kept).not.toContain('HEADWORD NORMALIZATION');
+    expect(kept).not.toContain('a plural noun → its singular');
+    expect(kept).toContain('de boodschappen');
+    expect(kept).toContain('ALREADY KNOWN');
+    // everything the model still owns is still asked for
+    expect(kept).toMatch(/- "partOfSpeech"/);
+    expect(kept).toMatch(/- "definitionTranslated"/);
+    expect(kept).toMatch(/- "example1"/);
+
+    // ...and the default prompt is untouched.
+    const plain = buildPrompt(lang, 'boodschappen');
+    expect(plain).toContain('HEADWORD NORMALIZATION');
+    expect(plain).toMatch(/- "headword": string/);
+  });
+});

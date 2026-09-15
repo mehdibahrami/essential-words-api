@@ -20,6 +20,11 @@ function buildPrompt(language, word, opts = {}) {
   const suppliedTranslation = String(opts.wordTranslated || '').trim();
   const suppliedDefinition = String(opts.definition || '').trim();
   const posHint = String(opts.posHint || '').trim();
+  // A caller with a curated list owns its headword outright: "de boodschappen" is plural
+  // on purpose and "naar bed gaan" is an expression, so normalizing either would answer a
+  // different question than the one asked. Suppressed rather than merely overridden — a
+  // prompt that both demands the base form and demands the given form is contradictory.
+  const keepHeadword = !!opts.keepHeadword;
   const dutchGrammarBlock = isDutch ? `
 
 DUTCH-SPECIFIC GRAMMAR RULES:
@@ -30,6 +35,7 @@ DUTCH-SPECIFIC GRAMMAR RULES:
   // Fields the caller already holds are stated as fact and struck from the request list,
   // so the model spends its response on what only it can supply.
   const knownLines = [
+    keepHeadword ? `- The headword is ALREADY KNOWN and is the intended form, exactly as written: "${word}". It is deliberate — a plural noun, an inflected form or a multi-word expression is the point here, so do NOT singularise it, de-inflect it, shorten it or otherwise change it. Every other field you return must describe THIS exact form.` : '',
     suppliedTranslation ? `- The Persian translation is ALREADY KNOWN: "${suppliedTranslation}". Use it as given.` : '',
     suppliedDefinition ? `- The English definition is ALREADY KNOWN: "${suppliedDefinition}". Use it as given.` : '',
     posHint ? `- The student's word list labels this as "${posHint}". Treat that as a HINT only — if the more accurate label is different (for example "verb (separable)"), use the accurate one.` : '',
@@ -37,6 +43,13 @@ DUTCH-SPECIFIC GRAMMAR RULES:
   const knownBlock = knownLines.length ? `\n\nALREADY KNOWN — do NOT return these fields:\n${knownLines.join('\n')}` : '';
   const askTranslation = suppliedTranslation ? '' : '\n- "wordTranslated": string.';
   const askDefinition = suppliedDefinition ? '' : '\n- "definition": string.';
+  const askHeadword = keepHeadword ? '' : '\n- "headword": string, per the normalization rule above.';
+  const normalizationBlock = keepHeadword ? '' : `
+
+HEADWORD NORMALIZATION: "headword" is always the base DICTIONARY form — corrected for spelling/casing, and NEVER the inflected form the student typed if they typed one:
+- a conjugated verb → its infinitive (student enters "ben" → headword "zijn")
+- a plural noun → its singular (student enters "huizen" → headword "het huis")
+- an inflected adjective → its base predicate form (student enters Dutch "lange" → headword "lang")`;
 
   return `You are populating a vocabulary flashcard for a language-learning app used by a native Persian (Farsi) speaker learning ${language.name} (code: ${language.code}). The student entered: "${word}".
 
@@ -44,15 +57,9 @@ LANGUAGE RULES — apply to every field below:
 - "headword", "example1" and "example2" are written in ${language.name}.
 - "definition" is written in ENGLISH, ALWAYS — regardless of ${language.name}. It is a short dictionary-style gloss (e.g. "occupied / busy", "with", "in front of"), not a definition written in ${language.name}.
 - "wordTranslated", "definitionTranslated", "example1Translated" and "example2Translated" are written in PERSIAN (Farsi) script, ALWAYS — never English.
-- "example1" and "example2" must be CEFR A2 level: short sentences, common everyday vocabulary, simple grammar — no subordinate clauses or advanced tenses.
+- "example1" and "example2" must be CEFR A2 level: short sentences, common everyday vocabulary, simple grammar — no subordinate clauses or advanced tenses.${normalizationBlock}
 
-HEADWORD NORMALIZATION: "headword" is always the base DICTIONARY form — corrected for spelling/casing, and NEVER the inflected form the student typed if they typed one:
-- a conjugated verb → its infinitive (student enters "ben" → headword "zijn")
-- a plural noun → its singular (student enters "huizen" → headword "het huis")
-- an inflected adjective → its base predicate form (student enters Dutch "lange" → headword "lang")
-
-Return a single JSON object (not an array) with exactly these fields:
-- "headword": string, per the normalization rule above.
+Return a single JSON object (not an array) with exactly these fields:${askHeadword}
 - "partOfSpeech": the single most accurate grammatical label for the headword.${askTranslation}${askDefinition}
 - "definitionTranslated": string.
 - "example1": string.
@@ -161,9 +168,10 @@ function ensureNounArticle(headword, partOfSpeech, grammar) {
  * duplicate check all succeed — a failure at any step leaves the set untouched.
  *
  * `input` is either the bare word (the iOS app's shape, kept working) or an options
- * object `{word, wordTranslated, definition, posHint, pinned}` — the Dutch exam page
- * already holds the translation and gloss, so it supplies them rather than paying for
- * the model to re-derive them.
+ * object `{word, wordTranslated, definition, posHint, pinned, keepHeadword}` — the Dutch
+ * exam page already holds the translation and gloss, so it supplies them rather than
+ * paying for the model to re-derive them, and sets `keepHeadword` because its list is
+ * curated: an inflected form there is the lesson, not a typo to be corrected away.
  */
 async function generateWordForSet(db, wordSetId, input, deps = {}) {
   const opts = typeof input === 'string' ? { word: input } : (input || {});
@@ -193,8 +201,13 @@ async function generateWordForSet(db, wordSetId, input, deps = {}) {
   const partOfSpeech = normalizePartOfSpeech(details.partOfSpeech);
   const grammar = extractGrammar(language, partOfSpeech, details.grammar);
 
+  // `keepHeadword` makes the caller's word the headword in code, not merely in the prompt:
+  // prompt obedience is not a guarantee, and everything downstream that keys off the
+  // headword — the set-scoped duplicate check above all — must agree with what is stored,
+  // or the caller can never re-add or de-duplicate the word it actually asked for. `word`
+  // is already the trimmed caller input, so no second normalization path is introduced.
   const rawHeadword = typeof details.headword === 'string' && details.headword.trim() ? details.headword.trim() : word;
-  const headword = ensureNounArticle(rawHeadword, partOfSpeech, grammar);
+  const headword = opts.keepHeadword ? word : ensureNounArticle(rawHeadword, partOfSpeech, grammar);
 
   const existing = db
     .prepare('SELECT id FROM words WHERE wordSetId = ? AND deletedAt IS NULL AND lower(word) = lower(?)')
