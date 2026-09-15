@@ -25,12 +25,22 @@ function buildPrompt(language, word, opts = {}) {
   // different question than the one asked. Suppressed rather than merely overridden — a
   // prompt that both demands the base form and demands the given form is contradictory.
   const keepHeadword = !!opts.keepHeadword;
-  const dutchGrammarBlock = isDutch ? `
+  // Under keepHeadword the headword-SHAPING clauses below (article-prefix for a noun,
+  // bare infinitive for a verb) would contradict the verbatim instruction above, so they
+  // are dropped — but the grammar-object CONTENT requirements are still correct and still
+  // wanted, so only those clauses are trimmed, not the whole block.
+  const dutchGrammarBlock = isDutch ? (keepHeadword ? `
+
+DUTCH-SPECIFIC GRAMMAR RULES:
+- "partOfSpeech" should use this app's existing Dutch grammar labels: "noun", "verb", "verb (separable)", "verb (auxiliary)", "verb (modal)", "adjective", "adverb", "preposition", "pronoun", "conjunction", "determiner", "numeral", "interjection", etc. Use "verb (separable)" specifically when the verb's prefix detaches in the present tense (e.g. "opstaan" → "ik sta op", "meenemen" → "ik neem mee").
+- Noun: also include a "grammar" object: {"article": "de" or "het", "plural": "<plural form, WITHOUT the article>"}.
+- Verb (any "partOfSpeech" starting with "verb"): also include a "grammar" object with the FULL conjugation, shaped exactly like this real example for the separable verb "opstaan": {"present": {"ik": "sta op", "jij": "staat op", "hij": "staat op", "wij": "staan op"}, "irregular": true, "separable": true, "past": {"singular": "stond op", "plural": "stonden op"}, "pastParticiple": "opgestaan"}. CRITICAL: each present-tense VALUE is ONLY the conjugated verb (plus its detached prefix for a separable verb) — it must NEVER repeat the subject pronoun that is already its own JSON key (wrong: "ik": "ik sta op"; correct: "ik": "sta op"). For a separable verb, the detached prefix goes at the END of the value (wrong: "opstaat"; correct: "staat op").
+- The headword above is already fixed and given verbatim: the "grammar" object and both example sentences must describe THAT exact headword, not a related lemma.` : `
 
 DUTCH-SPECIFIC GRAMMAR RULES:
 - "partOfSpeech" should use this app's existing Dutch grammar labels: "noun", "verb", "verb (separable)", "verb (auxiliary)", "verb (modal)", "adjective", "adverb", "preposition", "pronoun", "conjunction", "determiner", "numeral", "interjection", etc. Use "verb (separable)" specifically when the verb's prefix detaches in the present tense (e.g. "opstaan" → "ik sta op", "meenemen" → "ik neem mee").
 - Noun: "headword" MUST start with its article, "de " or "het " — exactly like every Dutch noun already in this app's database (e.g. "de hand", "het leven", "de tafel", "het huis"), never a bare noun with no article. Also include a "grammar" object: {"article": "de" or "het", "plural": "<plural form, WITHOUT the article>"}.
-- Verb (any "partOfSpeech" starting with "verb"): "headword" is the bare infinitive, no article. Also include a "grammar" object with the FULL conjugation, shaped exactly like this real example for the separable verb "opstaan": {"present": {"ik": "sta op", "jij": "staat op", "hij": "staat op", "wij": "staan op"}, "irregular": true, "separable": true, "past": {"singular": "stond op", "plural": "stonden op"}, "pastParticiple": "opgestaan"}. CRITICAL: each present-tense VALUE is ONLY the conjugated verb (plus its detached prefix for a separable verb) — it must NEVER repeat the subject pronoun that is already its own JSON key (wrong: "ik": "ik sta op"; correct: "ik": "sta op"). For a separable verb, the detached prefix goes at the END of the value (wrong: "opstaat"; correct: "staat op").` : '';
+- Verb (any "partOfSpeech" starting with "verb"): "headword" is the bare infinitive, no article. Also include a "grammar" object with the FULL conjugation, shaped exactly like this real example for the separable verb "opstaan": {"present": {"ik": "sta op", "jij": "staat op", "hij": "staat op", "wij": "staan op"}, "irregular": true, "separable": true, "past": {"singular": "stond op", "plural": "stonden op"}, "pastParticiple": "opgestaan"}. CRITICAL: each present-tense VALUE is ONLY the conjugated verb (plus its detached prefix for a separable verb) — it must NEVER repeat the subject pronoun that is already its own JSON key (wrong: "ik": "ik sta op"; correct: "ik": "sta op"). For a separable verb, the detached prefix goes at the END of the value (wrong: "opstaat"; correct: "staat op").`) : '';
 
   // Fields the caller already holds are stated as fact and struck from the request list,
   // so the model spends its response on what only it can supply.

@@ -10,6 +10,37 @@ const words = require('../src/services/words');
 const { generateWordDetails: mockedGenerateWordDetails } = require('../src/services/gemini');
 const { generateWordForSet, buildPrompt } = require('../src/services/wordGeneration');
 
+const SNAPSHOT_0083133_PROMPT = `You are populating a vocabulary flashcard for a language-learning app used by a native Persian (Farsi) speaker learning Dutch (code: nl-NL). The student entered: "de boodschappen".
+
+LANGUAGE RULES — apply to every field below:
+- "headword", "example1" and "example2" are written in Dutch.
+- "definition" is written in ENGLISH, ALWAYS — regardless of Dutch. It is a short dictionary-style gloss (e.g. "occupied / busy", "with", "in front of"), not a definition written in Dutch.
+- "wordTranslated", "definitionTranslated", "example1Translated" and "example2Translated" are written in PERSIAN (Farsi) script, ALWAYS — never English.
+- "example1" and "example2" must be CEFR A2 level: short sentences, common everyday vocabulary, simple grammar — no subordinate clauses or advanced tenses.
+
+HEADWORD NORMALIZATION: "headword" is always the base DICTIONARY form — corrected for spelling/casing, and NEVER the inflected form the student typed if they typed one:
+- a conjugated verb → its infinitive (student enters "ben" → headword "zijn")
+- a plural noun → its singular (student enters "huizen" → headword "het huis")
+- an inflected adjective → its base predicate form (student enters Dutch "lange" → headword "lang")
+
+Return a single JSON object (not an array) with exactly these fields:
+- "headword": string, per the normalization rule above.
+- "partOfSpeech": the single most accurate grammatical label for the headword.
+- "wordTranslated": string.
+- "definition": string.
+- "definitionTranslated": string.
+- "example1": string.
+- "example1Translated": string.
+- "example2": string.
+- "example2Translated": string.
+
+DUTCH-SPECIFIC GRAMMAR RULES:
+- "partOfSpeech" should use this app's existing Dutch grammar labels: "noun", "verb", "verb (separable)", "verb (auxiliary)", "verb (modal)", "adjective", "adverb", "preposition", "pronoun", "conjunction", "determiner", "numeral", "interjection", etc. Use "verb (separable)" specifically when the verb's prefix detaches in the present tense (e.g. "opstaan" → "ik sta op", "meenemen" → "ik neem mee").
+- Noun: "headword" MUST start with its article, "de " or "het " — exactly like every Dutch noun already in this app's database (e.g. "de hand", "het leven", "de tafel", "het huis"), never a bare noun with no article. Also include a "grammar" object: {"article": "de" or "het", "plural": "<plural form, WITHOUT the article>"}.
+- Verb (any "partOfSpeech" starting with "verb"): "headword" is the bare infinitive, no article. Also include a "grammar" object with the FULL conjugation, shaped exactly like this real example for the separable verb "opstaan": {"present": {"ik": "sta op", "jij": "staat op", "hij": "staat op", "wij": "staan op"}, "irregular": true, "separable": true, "past": {"singular": "stond op", "plural": "stonden op"}, "pastParticiple": "opgestaan"}. CRITICAL: each present-tense VALUE is ONLY the conjugated verb (plus its detached prefix for a separable verb) — it must NEVER repeat the subject pronoun that is already its own JSON key (wrong: "ik": "ik sta op"; correct: "ik": "sta op"). For a separable verb, the detached prefix goes at the END of the value (wrong: "opstaat"; correct: "staat op").
+
+Respond with ONLY the JSON object — no markdown fences, no surrounding text.`;
+
 function seedDutch() {
   const db = openDatabase(':memory:');
   const lang = languages.createLanguage(db, { name: 'Dutch', code: 'nl-NL' });
@@ -401,5 +432,25 @@ describe('keepHeadword', () => {
     const plain = buildPrompt(lang, 'boodschappen');
     expect(plain).toContain('HEADWORD NORMALIZATION');
     expect(plain).toMatch(/- "headword": string/);
+  });
+
+  test('under keepHeadword the prompt drops the headword-shaping clauses but keeps the grammar-object requirements', () => {
+    const lang = { name: 'Dutch', code: 'nl-NL' };
+    const kept = buildPrompt(lang, 'de boodschappen', { ...plural, keepHeadword: true });
+    // no instruction survives about what FORM the headword must take
+    expect(kept).not.toMatch(/headword.*MUST start with its article/);
+    expect(kept).not.toMatch(/headword.*is the bare infinitive/);
+    // the consequence is spelled out explicitly instead
+    expect(kept).toMatch(/"grammar" object and both example sentences must describe/);
+    // the grammar-object CONTENT requirements are still present and unchanged
+    expect(kept).toContain('{"article": "de" or "het", "plural": "<plural form, WITHOUT the article>"}');
+    expect(kept).toContain('FULL conjugation');
+    expect(kept).toContain('CRITICAL: each present-tense VALUE is ONLY the conjugated verb');
+  });
+
+  test('without keepHeadword the prompt is byte-identical to commit 0083133', () => {
+    const lang = { name: 'Dutch', code: 'nl-NL' };
+    const prompt = buildPrompt(lang, 'de boodschappen');
+    expect(prompt).toBe(SNAPSHOT_0083133_PROMPT);
   });
 });
