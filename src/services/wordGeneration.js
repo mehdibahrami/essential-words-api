@@ -15,14 +15,28 @@ const words = require('./words');
  * have silently collapsed "verb (separable)" down to "verb", throwing away exactly the
  * fact that matters most for a separable verb.
  */
-function buildPrompt(language, word) {
+function buildPrompt(language, word, opts = {}) {
   const isDutch = language.code === 'nl-NL';
+  const suppliedTranslation = String(opts.wordTranslated || '').trim();
+  const suppliedDefinition = String(opts.definition || '').trim();
+  const posHint = String(opts.posHint || '').trim();
   const dutchGrammarBlock = isDutch ? `
 
 DUTCH-SPECIFIC GRAMMAR RULES:
 - "partOfSpeech" should use this app's existing Dutch grammar labels: "noun", "verb", "verb (separable)", "verb (auxiliary)", "verb (modal)", "adjective", "adverb", "preposition", "pronoun", "conjunction", "determiner", "numeral", "interjection", etc. Use "verb (separable)" specifically when the verb's prefix detaches in the present tense (e.g. "opstaan" → "ik sta op", "meenemen" → "ik neem mee").
 - Noun: "headword" MUST start with its article, "de " or "het " — exactly like every Dutch noun already in this app's database (e.g. "de hand", "het leven", "de tafel", "het huis"), never a bare noun with no article. Also include a "grammar" object: {"article": "de" or "het", "plural": "<plural form, WITHOUT the article>"}.
 - Verb (any "partOfSpeech" starting with "verb"): "headword" is the bare infinitive, no article. Also include a "grammar" object with the FULL conjugation, shaped exactly like this real example for the separable verb "opstaan": {"present": {"ik": "sta op", "jij": "staat op", "hij": "staat op", "wij": "staan op"}, "irregular": true, "separable": true, "past": {"singular": "stond op", "plural": "stonden op"}, "pastParticiple": "opgestaan"}. CRITICAL: each present-tense VALUE is ONLY the conjugated verb (plus its detached prefix for a separable verb) — it must NEVER repeat the subject pronoun that is already its own JSON key (wrong: "ik": "ik sta op"; correct: "ik": "sta op"). For a separable verb, the detached prefix goes at the END of the value (wrong: "opstaat"; correct: "staat op").` : '';
+
+  // Fields the caller already holds are stated as fact and struck from the request list,
+  // so the model spends its response on what only it can supply.
+  const knownLines = [
+    suppliedTranslation ? `- The Persian translation is ALREADY KNOWN: "${suppliedTranslation}". Use it as given.` : '',
+    suppliedDefinition ? `- The English definition is ALREADY KNOWN: "${suppliedDefinition}". Use it as given.` : '',
+    posHint ? `- The student's word list labels this as "${posHint}". Treat that as a HINT only — if the more accurate label is different (for example "verb (separable)"), use the accurate one.` : '',
+  ].filter(Boolean);
+  const knownBlock = knownLines.length ? `\n\nALREADY KNOWN — do NOT return these fields:\n${knownLines.join('\n')}` : '';
+  const askTranslation = suppliedTranslation ? '' : '\n- "wordTranslated": string.';
+  const askDefinition = suppliedDefinition ? '' : '\n- "definition": string.';
 
   return `You are populating a vocabulary flashcard for a language-learning app used by a native Persian (Farsi) speaker learning ${language.name} (code: ${language.code}). The student entered: "${word}".
 
@@ -39,14 +53,12 @@ HEADWORD NORMALIZATION: "headword" is always the base DICTIONARY form — correc
 
 Return a single JSON object (not an array) with exactly these fields:
 - "headword": string, per the normalization rule above.
-- "partOfSpeech": the single most accurate grammatical label for the headword.
-- "wordTranslated": string.
-- "definition": string.
+- "partOfSpeech": the single most accurate grammatical label for the headword.${askTranslation}${askDefinition}
 - "definitionTranslated": string.
 - "example1": string.
 - "example1Translated": string.
 - "example2": string.
-- "example2Translated": string.${dutchGrammarBlock}
+- "example2Translated": string.${dutchGrammarBlock}${knownBlock}
 
 Respond with ONLY the JSON object — no markdown fences, no surrounding text.`;
 }
@@ -147,9 +159,15 @@ function ensureNounArticle(headword, partOfSpeech, grammar) {
  * Generate a full word record from a single user-entered word via AI, and insert it
  * into `wordSetId`. Nothing is written to the DB unless generation, validation and the
  * duplicate check all succeed — a failure at any step leaves the set untouched.
+ *
+ * `input` is either the bare word (the iOS app's shape, kept working) or an options
+ * object `{word, wordTranslated, definition, posHint, pinned}` — the Dutch exam page
+ * already holds the translation and gloss, so it supplies them rather than paying for
+ * the model to re-derive them.
  */
-async function generateWordForSet(db, wordSetId, rawWord, deps = {}) {
-  const word = String(rawWord || '').trim();
+async function generateWordForSet(db, wordSetId, input, deps = {}) {
+  const opts = typeof input === 'string' ? { word: input } : (input || {});
+  const word = String(opts.word || '').trim();
   if (!word) throw badRequest('word is required');
 
   const set = db.prepare('SELECT id, languageId FROM word_sets WHERE id = ? AND deletedAt IS NULL').get(wordSetId);
@@ -158,11 +176,15 @@ async function generateWordForSet(db, wordSetId, rawWord, deps = {}) {
   if (!language) throw notFound('Language not found');
 
   const generate = deps.generateWordDetails || generateWordDetails;
-  const prompt = buildPrompt(language, word);
+  const prompt = buildPrompt(language, word, opts);
   const details = await generate(prompt);
 
-  if (!details || typeof details.wordTranslated !== 'string' || !details.wordTranslated.trim() ||
-      typeof details.definition !== 'string' || !details.definition.trim()) {
+  // A supplied field is never "missing" -- the 502 guards only what the model still owns.
+  const suppliedTranslation = String(opts.wordTranslated || '').trim();
+  const suppliedDefinition = String(opts.definition || '').trim();
+  const wordTranslated = suppliedTranslation || String((details && details.wordTranslated) || '').trim();
+  const definition = suppliedDefinition || String((details && details.definition) || '').trim();
+  if (!details || !wordTranslated || !definition) {
     throw new HttpError(502, 'GEMINI_INCOMPLETE', 'AI response was missing required fields');
   }
 
@@ -177,20 +199,27 @@ async function generateWordForSet(db, wordSetId, rawWord, deps = {}) {
     .get(wordSetId, headword);
   if (existing) throw conflict(`"${headword}" is already in this set`);
 
-  return words.createWord(db, {
-    word: headword,
-    languageId: set.languageId,
-    wordSetId: Number(wordSetId),
-    wordTranslated: details.wordTranslated.trim(),
-    partOfSpeech,
-    definition: details.definition.trim(),
-    definitionTranslated: (details.definitionTranslated || '').toString().trim(),
-    example1: details.example1 || null,
-    example1Translated: details.example1Translated || null,
-    example2: details.example2 || null,
-    example2Translated: details.example2Translated || null,
-    grammar,
+  const insert = db.transaction(() => {
+    const record = words.createWord(db, {
+      word: headword,
+      languageId: set.languageId,
+      wordSetId: Number(wordSetId),
+      wordTranslated,
+      partOfSpeech,
+      definition,
+      definitionTranslated: (details.definitionTranslated || '').toString().trim(),
+      example1: details.example1 || null,
+      example1Translated: details.example1Translated || null,
+      example2: details.example2 || null,
+      example2Translated: details.example2Translated || null,
+      grammar,
+    });
+    if (opts.pinned) {
+      db.prepare('UPDATE words SET pinnedAt = ? WHERE id = ?').run(new Date().toISOString(), record.id);
+    }
+    return record;
   });
+  return insert();
 }
 
 module.exports = {

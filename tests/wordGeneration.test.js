@@ -188,3 +188,109 @@ test('POST /api/sets/:id/words/ai-generate end to end', async () => {
   expect(res.body.word).toBe('maison');
   expect(res.body.wordTranslated).toBe('house');
 });
+
+describe('caller-supplied fields', () => {
+  const supplied = { wordTranslated: 'رسید خرید', definition: 'receipt', posHint: 'noun' };
+
+  test('prompt states supplied values as fixed and stops asking for them', () => {
+    const lang = { name: 'Dutch', code: 'nl-NL' };
+    const prompt = buildPrompt(lang, 'de kassabon', supplied);
+    expect(prompt).toContain('رسید خرید');
+    expect(prompt).toContain('receipt');
+    expect(prompt).toContain('ALREADY KNOWN');
+    expect(prompt).not.toMatch(/- "wordTranslated": string\./);
+    expect(prompt).not.toMatch(/- "definition": string\./);
+    // still asks for everything the model is responsible for
+    expect(prompt).toMatch(/- "definitionTranslated"/);
+    expect(prompt).toMatch(/- "example1"/);
+    expect(prompt).toMatch(/- "partOfSpeech"/);
+  });
+
+  test('supplied translation and definition are stored verbatim, model values ignored', async () => {
+    const { db, set } = seedDutch();
+    const generate = async () => ({
+      headword: 'de kassabon', partOfSpeech: 'noun',
+      wordTranslated: 'SHOULD BE IGNORED', definition: 'SHOULD BE IGNORED',
+      definitionTranslated: 'رسیدی که در فروشگاه می‌گیرید',
+      example1: 'Ik heb de kassabon bewaard.', example1Translated: 'من رسید را نگه داشتم.',
+      example2: 'Mag ik de kassabon zien?', example2Translated: 'می‌توانم رسید را ببینم؟',
+      grammar: { article: 'de', plural: 'kassabonnen' },
+    });
+    const created = await generateWordForSet(
+      db, set.id,
+      { word: 'de kassabon', ...supplied },
+      { generateWordDetails: generate }
+    );
+    expect(created.wordTranslated).toBe('رسید خرید');
+    expect(created.definition).toBe('receipt');
+    expect(created.definitionTranslated).toBe('رسیدی که در فروشگاه می‌گیرید');
+  });
+
+  test('posHint does not override the model partOfSpeech', async () => {
+    const { db, set } = seedDutch();
+    const generate = async () => ({
+      headword: 'opstaan', partOfSpeech: 'verb (separable)',
+      definitionTranslated: 'بلند شدن',
+      example1: 'Ik sta vroeg op.', example1Translated: 'من زود بلند می‌شوم.',
+      example2: 'Wij staan om zeven uur op.', example2Translated: 'ما ساعت هفت بلند می‌شویم.',
+      grammar: {
+        present: { ik: 'sta op', jij: 'staat op', hij: 'staat op', wij: 'staan op' },
+        irregular: true, separable: true,
+        past: { singular: 'stond op', plural: 'stonden op' }, pastParticiple: 'opgestaan',
+      },
+    });
+    const created = await generateWordForSet(
+      db, set.id,
+      { word: 'opstaan', wordTranslated: 'بلند شدن', definition: 'to get up', posHint: 'verb' },
+      { generateWordDetails: generate }
+    );
+    expect(created.partOfSpeech).toBe('verb (separable)');
+    expect(created.grammar).toMatchObject({ kind: 'verb', separable: true });
+  });
+
+  test('pinned:true stamps pinnedAt; omitting it leaves pinnedAt null', async () => {
+    const { db, set } = seedDutch();
+    const generate = async () => ({
+      headword: 'de fiets', partOfSpeech: 'noun', definitionTranslated: 'دوچرخه',
+      example1: 'Ik pak de fiets.', example1Translated: 'من دوچرخه را برمی‌دارم.',
+      example2: 'De fiets is kapot.', example2Translated: 'دوچرخه خراب است.',
+      grammar: { article: 'de', plural: 'fietsen' },
+    });
+    const deps = { generateWordDetails: generate };
+
+    const pinned = await generateWordForSet(
+      db, set.id, { word: 'de fiets', wordTranslated: 'دوچرخه', definition: 'bicycle', pinned: true }, deps
+    );
+    const plain = await generateWordForSet(
+      db, set.id, { word: 'de auto', wordTranslated: 'ماشین', definition: 'car' },
+      { generateWordDetails: async () => ({ headword: 'de auto', partOfSpeech: 'noun', definitionTranslated: 'ماشین' }) }
+    );
+
+    const at = (id) => db.prepare('SELECT pinnedAt FROM words WHERE id = ?').get(id).pinnedAt;
+    expect(at(pinned.id)).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(at(plain.id)).toBeNull();
+  });
+
+  test('the old string signature still works unchanged', async () => {
+    const { db, set } = seedDutch();
+    const generate = async (prompt) => {
+      expect(prompt).not.toContain('ALREADY KNOWN');
+      return {
+        headword: 'het huis', partOfSpeech: 'noun',
+        wordTranslated: 'خانه', definition: 'house', definitionTranslated: 'ساختمانی برای زندگی',
+        grammar: { article: 'het', plural: 'huizen' },
+      };
+    };
+    const created = await generateWordForSet(db, set.id, 'huis', { generateWordDetails: generate });
+    expect(created.word).toBe('het huis');
+    expect(created.wordTranslated).toBe('خانه');
+  });
+
+  test('GEMINI_INCOMPLETE still fires for a field the model still owns', async () => {
+    const { db, set } = seedDutch();
+    const generate = async () => ({ headword: 'de tafel', partOfSpeech: 'noun', definition: 'table' });
+    await expect(
+      generateWordForSet(db, set.id, 'de tafel', { generateWordDetails: generate })
+    ).rejects.toMatchObject({ status: 502 });
+  });
+});

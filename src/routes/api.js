@@ -46,9 +46,11 @@ router.put('/words/:id', validate({ body: schemas.wordUpdateSchema }), asyncHand
 router.delete('/words/:id', asyncHandler((req, res) => { words.deleteWord(db(req), idParam(req)); res.status(204).end(); }));
 
 // AI word generation: given a single word, ask Gemini to fill in translation, definition,
-// examples and (Dutch nouns only) article/plural, then insert it into the set.
+// examples and (Dutch nouns only) article/plural, then insert it into the set. A caller
+// that already holds the translation/gloss (the Dutch exam page) may supply them in the
+// body, along with `posHint` and `pinned`; see wordGeneration.generateWordForSet.
 router.post('/sets/:id/words/ai-generate', validate({ body: schemas.aiGenerateWordSchema }), asyncHandler(async (req, res) =>
-  res.status(201).json(await wordGeneration.generateWordForSet(db(req), idParam(req), req.body.word))));
+  res.status(201).json(await wordGeneration.generateWordForSet(db(req), idParam(req), req.body))));
 
 // Bulk word ops (CSV import / seeding, bulk delete)
 router.post('/sets/:id/words/bulk', validate({ body: schemas.bulkCreateWordsSchema }), asyncHandler((req, res) => res.status(201).json(words.bulkCreateWords(db(req), idParam(req), req.body.words ?? req.body))));

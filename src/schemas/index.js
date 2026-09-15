@@ -98,9 +98,18 @@ const bulkCreateWordsSchema = z.union([
   z.object({ words: z.array(bulkWordItemSchema).max(BULK_WORDS_MAX) }).strict(),
 ]);
 
+// POST /sets/:id/words/ai-generate. `word` alone is the iOS app's body and is all that
+// is required. The four optional fields let a caller that already HAS the translation
+// and gloss (the Dutch exam page) supply them instead of paying for the model to
+// re-derive them; `posHint` is context for the model, never an override; `pinned` lifts
+// the word to the front of the New queue. `.strict()` is kept, so a typo is still a 400.
 const aiGenerateWordSchema = z
   .object({
     word: z.string().min(1),
+    wordTranslated: optionalString,
+    definition: optionalString,
+    posHint: optionalString,
+    pinned: z.boolean().optional(),
   })
   .strict();
 
