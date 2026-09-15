@@ -293,4 +293,40 @@ describe('caller-supplied fields', () => {
       generateWordForSet(db, set.id, 'de tafel', { generateWordDetails: generate })
     ).rejects.toMatchObject({ status: 502 });
   });
+
+  test('GEMINI_INCOMPLETE fires when the model returns a non-string wordTranslated and none was supplied', async () => {
+    const { db, set } = seedDutch();
+    const generate = async () => ({
+      headword: 'de tafel', partOfSpeech: 'noun', wordTranslated: 12345, definition: 'a table',
+    });
+    await expect(
+      generateWordForSet(db, set.id, 'de tafel', { generateWordDetails: generate })
+    ).rejects.toMatchObject({ status: 502, code: 'GEMINI_INCOMPLETE' });
+    expect(words.listWords(db, { setId: set.id })).toHaveLength(0);
+  });
+
+  test('GEMINI_INCOMPLETE fires when the model returns a non-string definition and none was supplied', async () => {
+    const { db, set } = seedDutch();
+    const generate = async () => ({
+      headword: 'de tafel', partOfSpeech: 'noun', wordTranslated: 'table', definition: {},
+    });
+    await expect(
+      generateWordForSet(db, set.id, 'de tafel', { generateWordDetails: generate })
+    ).rejects.toMatchObject({ status: 502, code: 'GEMINI_INCOMPLETE' });
+    expect(words.listWords(db, { setId: set.id })).toHaveLength(0);
+  });
+
+  test('a caller-supplied wordTranslated still wins even when the model returns a non-string for it', async () => {
+    const { db, set } = seedDutch();
+    const generate = async () => ({
+      headword: 'de tafel', partOfSpeech: 'noun', wordTranslated: 12345,
+      definitionTranslated: 'میز',
+    });
+    const created = await generateWordForSet(
+      db, set.id,
+      { word: 'de tafel', wordTranslated: 'میز', definition: 'table' },
+      { generateWordDetails: generate }
+    );
+    expect(created.wordTranslated).toBe('میز');
+  });
 });

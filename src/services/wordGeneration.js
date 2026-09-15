@@ -182,8 +182,10 @@ async function generateWordForSet(db, wordSetId, input, deps = {}) {
   // A supplied field is never "missing" -- the 502 guards only what the model still owns.
   const suppliedTranslation = String(opts.wordTranslated || '').trim();
   const suppliedDefinition = String(opts.definition || '').trim();
-  const wordTranslated = suppliedTranslation || String((details && details.wordTranslated) || '').trim();
-  const definition = suppliedDefinition || String((details && details.definition) || '').trim();
+  const modelTranslated = typeof details?.wordTranslated === 'string' ? details.wordTranslated.trim() : '';
+  const modelDefinition = typeof details?.definition === 'string' ? details.definition.trim() : '';
+  const wordTranslated = suppliedTranslation || modelTranslated;
+  const definition = suppliedDefinition || modelDefinition;
   if (!details || !wordTranslated || !definition) {
     throw new HttpError(502, 'GEMINI_INCOMPLETE', 'AI response was missing required fields');
   }
