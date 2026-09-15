@@ -6,7 +6,7 @@ const config = {
   rateLimitRpm: Number(process.env.RATE_LIMIT_RPM) || 120,
   timezone: process.env.APP_TIMEZONE || 'Europe/Amsterdam',
   geminiApiKey: process.env.GEMINI_API_KEY || '',
-  geminiModel: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+  geminiModel: process.env.GEMINI_MODEL || 'gemini-flash-lite-latest',
   dbPath:
     process.env.DB_PATH ||
     path.join(__dirname, '..', '..', 'data', 'essential-words.sqlite'),
