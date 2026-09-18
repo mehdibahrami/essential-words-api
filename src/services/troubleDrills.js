@@ -344,7 +344,11 @@ async function generateDrills(db, body, deps = {}) {
     }
     // Regeneration failed for this word but good material already exists. A previously
     // generated AI sentence beats a locally blanked example, so one flaky call cannot
-    // permanently downgrade a word. Returned as-is, and NOT rewritten to the cache below.
+    // permanently downgrade a word. It does flow into `write(built)` below and get
+    // rewritten, which is a no-op: the upsert sets the same seven content columns from
+    // the same values and leaves `createdAt` alone. Filtering it back out would mean
+    // tracking which entries came from cache — real bookkeeping for no behavioural
+    // difference. If `word_material` ever gains an `updatedAt`, revisit this.
     const previouslyCached = cached.get(row.id);
     if (previouslyCached) return previouslyCached;
 
