@@ -150,7 +150,7 @@ function knownWords(db, languageId, limit = MAX_KNOWN_WORDS) {
     .filter(Boolean);
 }
 
-function drillPrompt(language, rows, level = 'A1', known = []) {
+function drillPrompt(language, rows, level = 'A1', known = [], previous = new Map()) {
   const list = rows
     .map((r) => `- id ${r.id}: "${r.word}" (${r.partOfSpeech || 'unknown'}) = ${r.definition || r.wordTranslated}`)
     .join('\n');
@@ -169,6 +169,17 @@ function drillPrompt(language, rows, level = 'A1', known = []) {
       ].join('\n')
     : '';
 
+  // A deterministic prompt at low temperature happily returns the sentence it returned
+  // last time, which would mean paying the full regeneration latency for no change.
+  const avoided = rows.filter((r) => previous.get(r.id));
+  const avoidBlock = avoided.length
+    ? [
+        '',
+        'Do NOT reuse these sentences — write a different one for each of these words:',
+        ...avoided.map((r) => `- id ${r.id}: "${previous.get(r.id)}"`),
+      ].join('\n')
+    : '';
+
   return [
     `The student keeps forgetting these ${language.name} (${language.code}) words:`,
     list,
@@ -176,6 +187,7 @@ function drillPrompt(language, rows, level = 'A1', known = []) {
     `Write every sentence at CEFR level ${level} — vocabulary and grammar the student can read at that level.`,
     `Every sentence must be between 4 and 8 words long. Longer sentences cannot be used as word-bank exercises.`,
     knownBlock,
+    avoidBlock,
     '',
     `For EACH word return one object with:`,
     `- "wordId": the numeric id given above.`,
@@ -267,7 +279,7 @@ function writeCachedMaterial(db, level, drill) {
  * something unusable, so a session is always startable.
  */
 async function generateDrills(db, body, deps = {}) {
-  const { languageId, setId = null, wordIds = [], level = 'A1', limit } = body || {};
+  const { languageId, setId = null, wordIds = [], level = 'A1', limit, refresh = false } = body || {};
   if (languageId == null) throw badRequest('languageId is required');
   const language = getLanguage(db, languageId);
   if (!language || language.deletedAt) throw badRequest('languageId does not reference an existing language');
@@ -288,7 +300,8 @@ async function generateDrills(db, body, deps = {}) {
   if (!rows.length) throw badRequest('none of the given wordIds exist');
 
   const cached = readCachedMaterial(db, ids, level);
-  const missing = rows.filter((r) => !cached.has(r.id));
+  // A refresh treats every word as missing; the cache stays only as a fallback below.
+  const missing = refresh ? rows : rows.filter((r) => !cached.has(r.id));
 
   // Nothing to generate: serve the cache and skip Gemini entirely.
   if (!missing.length) {
@@ -300,7 +313,11 @@ async function generateDrills(db, body, deps = {}) {
   const aiById = new Map();
   try {
     const generate = deps.generate || generateQuizFromPrompt;
-    const raw = await generate(drillPrompt(language, missing, level, knownWords(db, languageId)));
+    const previous = new Map(
+      [...cached.entries()].map(([id, d]) => [id, d.cloze ? d.cloze.sentence : null])
+    );
+    const raw = await generate(
+      drillPrompt(language, missing, level, knownWords(db, languageId), previous));
     for (const entry of Array.isArray(raw) ? raw : []) {
       if (entry && entry.wordId != null) aiById.set(Number(entry.wordId), entry);
     }
@@ -325,6 +342,12 @@ async function generateDrills(db, body, deps = {}) {
         confusables: Array.isArray(ai.confusables) ? ai.confusables.filter((c) => typeof c === 'string') : [],
       };
     }
+    // Regeneration failed for this word but good material already exists. A previously
+    // generated AI sentence beats a locally blanked example, so one flaky call cannot
+    // permanently downgrade a word. Returned as-is, and NOT rewritten to the cache below.
+    const previouslyCached = cached.get(row.id);
+    if (previouslyCached) return previouslyCached;
+
     const local = clozeFromExamples(row);
     if (local) local.distractors = usableDistractors(pickDistractors(pool, local.answer, bareWord(row.word)), local.answer);
     const usable = local && validCloze(local) ? local : null;
@@ -346,7 +369,9 @@ async function generateDrills(db, body, deps = {}) {
   write(built);
 
   const byId = new Map(built.map((d) => [d.wordId, d]));
-  return rows.map((r) => cached.get(r.id) || byId.get(r.id));
+  // Freshly built wins. This used to read `cached.get(r.id) || byId.get(r.id)`, which was
+  // correct only while the cache could never be bypassed.
+  return rows.map((r) => byId.get(r.id) || cached.get(r.id));
 }
 
 module.exports = {

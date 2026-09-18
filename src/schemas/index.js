@@ -127,6 +127,9 @@ const drillRequestSchema = z
     wordIds: idArray.optional(),
     level: optionalString,
     limit: idLike.optional(),
+    // Bypass the (wordId, level) material cache and generate again. The client sends it
+    // on every session start so a session is not the same questions as last time.
+    refresh: z.boolean().optional(),
   })
   .strict();
 

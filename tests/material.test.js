@@ -166,6 +166,75 @@ describe('known-vocabulary constraint', () => {
   });
 });
 
+test('refresh bypasses the cache and overwrites the stored row', async () => {
+  const { db, lang, w } = seed();
+  let calls = 0;
+  const first = async () => { calls += 1; return aiFor(w.id); };
+  await drills.generateDrills(
+    db, { languageId: lang.id, wordIds: [w.id], level: 'A1' }, { generate: first });
+  expect(calls).toBe(1);
+
+  const second = async () => {
+    calls += 1;
+    const out = aiFor(w.id);
+    out[0].cloze.sentence = 'Zij kan het niet ____.';
+    return out;
+  };
+  const out = await drills.generateDrills(
+    db,
+    { languageId: lang.id, wordIds: [w.id], level: 'A1', refresh: true },
+    { generate: second });
+
+  expect(calls).toBe(2);
+  expect(out[0].cloze.sentence).toBe('Zij kan het niet ____.');
+
+  const row = db.prepare('SELECT * FROM word_material WHERE wordId = ? AND level = ?')
+    .get(w.id, 'A1');
+  expect(row.clozeSentence).toBe('Zij kan het niet ____.');
+});
+
+test('a refresh that fails falls back to the cached row, not the local example', async () => {
+  const { db, lang, w } = seed();
+  await drills.generateDrills(
+    db, { languageId: lang.id, wordIds: [w.id], level: 'A1' },
+    { generate: async () => aiFor(w.id) });
+
+  const boom = async () => { throw new Error('gemini down'); };
+  const out = await drills.generateDrills(
+    db, { languageId: lang.id, wordIds: [w.id], level: 'A1', refresh: true },
+    { generate: boom });
+
+  // Good AI material already existed. One flaky call must not permanently downgrade the
+  // word to a blanked-out stored example.
+  expect(out[0].cloze.sentence).toBe('Ik kan haar naam niet ____.');
+  expect(out[0].hook).toBe('on + houden = to hold on to.');
+});
+
+test('a refresh tells the model which sentence not to reuse', async () => {
+  const { db, lang, w } = seed();
+  await drills.generateDrills(
+    db, { languageId: lang.id, wordIds: [w.id], level: 'A1' },
+    { generate: async () => aiFor(w.id) });
+
+  let prompt = '';
+  await drills.generateDrills(
+    db, { languageId: lang.id, wordIds: [w.id], level: 'A1', refresh: true },
+    { generate: async (p) => { prompt = p; return aiFor(w.id); } });
+
+  expect(prompt).toContain('Ik kan haar naam niet ____.');
+  expect(prompt).toContain('Do NOT reuse');
+});
+
+test('a cold refresh names no sentence to avoid', async () => {
+  const { db, lang, w } = seed();
+  let prompt = '';
+  await drills.generateDrills(
+    db, { languageId: lang.id, wordIds: [w.id], level: 'A1', refresh: true },
+    { generate: async (p) => { prompt = p; return aiFor(w.id); } });
+
+  expect(prompt).not.toContain('Do NOT reuse');
+});
+
 describe('cache invalidation', () => {
   test('editing a word drops its cached material', async () => {
     const { db, lang, w } = seed();
